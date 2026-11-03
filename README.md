@@ -79,3 +79,4 @@ npx serve .
 
 - **GitHub Pages:** Repozitoriy sozlamalaridan `Pages` bo'limiga kirib, `main` tarmog'ini tanlash kifoya.
 - **Netlify:** Loyiha papkasini to'g'ridan-to'g'ri Netlify boshqaruv paneliga sudrab tashlash (`drag & drop`) mumkin. `_headers` fayli Netlify xavfsizlik va keshlash siyosatini avtomatik sozlaydi.
+
