@@ -1,0 +1,20 @@
+{
+  "name": "word_cv",
+  "version": "1.0.0",
+  "description": "Ma'lumotnoma tuzatgich — kadrlar bo'limi uchun spravka-ob'ektivka tahlil va standartlashtirish tizimi",
+  "scripts": {
+    "start": "npx serve .",
+    "serve:py": "python3 -m http.server 8000"
+  },
+  "keywords": [
+    "spravka",
+    "cv",
+    "resume",
+    "hr",
+    "docx",
+    "pdf",
+    "uzbekistan"
+  ],
+  "author": "ecthelion-dev",
+  "license": "MIT"
+}
