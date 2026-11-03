@@ -1,0 +1,463 @@
+<!doctype html>
+<html lang="uz">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="icon" href="data:,">
+<title>Ma'lumotnoma tuzatgich</title>
+<link rel="stylesheet" href="css/fonts.css?v=a7797cf389">
+<link rel="stylesheet" href="css/app.css?v=3824fdd327">
+</head>
+<body>
+<div class="app">
+  <nav class="side" aria-label="Asosiy menyu">
+    <div class="brand">
+      <span class="lg"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" aria-hidden="true"><path d="M6 3h9l4 4v14H6z"/><path d="M9 12h7M9 16h7"/></svg></span>
+      <span><b>Ma'lumotnoma</b><small>Kadrlar bo'limi</small></span>
+      <button type="button" class="menubtn" id="menuBtn" aria-label="Menyu" aria-expanded="false" aria-controls="sideCol"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+    </div>
+    <div class="sidecol" id="sideCol">
+      <div class="sstat" id="sStat" hidden>
+        <span class="sl">Umumiy holat</span>
+        <div class="sv"><b id="ssOk">0</b><span id="ssTot">/ 0 tayyor</span></div>
+        <div class="sbar"><i id="ssBar"></i></div>
+        <span class="sl" id="ssSaved"></span>
+        <span class="sl" id="ssMem" hidden></span>
+      </div>
+      <div class="nav">
+        <button type="button" data-view="list" aria-current="page">Ma'lumotnomalar <em id="nAll">0</em></button>
+        <button type="button" data-view="dup">Takrorlar <em class="dupn" id="nDup"></em></button>
+        <button type="button" data-view="excel">Excel bazasi <em id="nXl"></em></button>
+        <button type="button" data-view="review">Tekshiruv <em class="hot" id="nWarn">0</em></button>
+        <button type="button" data-view="fill">Bo'sh maydonlar <em class="hot" id="nFill"></em></button>
+        <button type="button" data-go="report">Yakuniy hisobot <em></em></button>
+        <span class="navg">Qo'shimcha</span>
+        <button type="button" data-view="bulk">Ommaviy tuzatish <em></em></button>
+        <button type="button" data-view="coi">Manfaatlar to'qnashuvi <em></em></button>
+        <button type="button" data-view="evid">Dalillar to'plami <em class="hot" id="nEv"></em></button>
+        <button type="button" data-view="sci">Ilmiy salohiyat <em id="nSci"></em></button>
+        <button type="button" data-view="check">Yo'qlama <em class="hot" id="nChk"></em></button>
+        <button type="button" data-view="lead">Rahbarlar ma'lumoti <em></em></button>
+      </div>
+      <div class="foot">
+        <div class="xlstat" id="xlStat"><b>Excel ulanmagan</b><span>Kadrlar bazasi — ixtiyoriy</span></div>
+        <button type="button" class="helpbtn" id="helpBtn"><b aria-hidden="true">?</b>Qanday ishlaydi?</button>
+        <p class="privacy">Fayllar shu brauzerda qayta ishlanadi, serverga yuborilmaydi.
+          <label class="shchk"><input type="checkbox" id="sharedPc"> Umumiy kompyuter: 30 daqiqa ishlatilmasa, hammasini tozalash</label></p>
+      </div>
+    </div>
+  </nav>
+
+  <main class="main">
+    <!-- 1. Ma'lumotnomalar: hisoblagichlar, yuklash va jadval -->
+    <section class="view empty-state" id="vList">
+      <div class="vhead">
+        <h1>Ma'lumotnomalar<small id="lSub">Eski ma'lumotnomalarni yuklang — dastur ularni standart shaklga keltiradi</small></h1>
+        <button type="button" class="btn2" id="addBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Fayl qo'shish</button>
+        <button type="button" class="btn2" id="pickDir">Papka qo'shish</button>
+        <button type="button" class="btn2" id="newBlank" title="Fayl yo'q bo'lsa: bo'sh standart shaklni qo'lda to'ldirish">Yangi ma'lumotnoma</button>
+        <button type="button" class="btn" id="zipAll"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg><span id="zipTxt">Yuklab olish</span></button>
+      </div>
+      <div class="idlew" id="idleW" role="alertdialog" aria-labelledby="idleT" hidden>
+        <div class="gi"><b id="idleT">Ish tozalanadi</b><span id="idleTxt"></span></div>
+        <div class="acts"><button type="button" class="btn2" id="idleBkp">Zaxira olib tozalash</button><button type="button" class="btn" id="idleStay">Men shu yerdaman</button></div>
+      </div>
+      <div class="restore" id="restore" hidden>
+        <div class="gi"><b>Oldingi ish saqlangan</b><span id="restoreTxt"></span></div>
+        <div class="acts"><button type="button" class="dangerlink" id="restoreDel" title="Brauzerda saqlangan ma'lumotnomalar, tuzatishlar va Excel'ni butunlay o'chiradi">O'chirish</button><button type="button" class="btn2" id="restoreNo" title="Saqlangan ishni o'chirib, bo'sh ro'yxatdan boshlaydi">Yangidan boshlash</button><button type="button" class="btn" id="restoreYes">Davom ettirish</button></div>
+      </div>
+      <ol class="flow" id="flow" aria-label="Ish tartibi" hidden></ol>
+      <div class="guide" id="guide" role="status" aria-live="polite" hidden>
+        <span class="gnum" id="gNum" hidden></span>
+        <div class="gi"><b id="gTitle"></b><span id="gSub"></span><div class="gbar" id="gBarW"><u id="gBar"></u></div></div>
+        <div class="acts"><button type="button" class="btn2" id="gSecondary" hidden></button><button type="button" class="btn" id="gPrimary" hidden></button></div>
+      </div>
+      <div id="dropWrap">
+        <label id="drop" tabindex="0">
+          <input id="file" type="file" accept=".docx,.doc,.pdf,.zip" multiple>
+          <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true"><path d="M12 5h17l9 9v29H12z"/><path d="M29 5v9h9"/><path d="M18 24h14M18 30h14M18 36h8"/></svg>
+          <span class="t"><strong>Fayllarni shu yerga tashlang yoki bosib tanlang</strong><span>.docx, .doc, .pdf yoki .zip — yuzlab faylni birdaniga. Zaxira nusxani ham shu yerga tashlasangiz, ish tiklanadi.</span></span>
+        </label>
+        <input id="dir" type="file" webkitdirectory multiple hidden>
+      </div>
+      <p class="msg" id="sMsg" hidden></p>
+      <ol class="steps vList-steps" aria-label="Ish tartibi">
+        <li><div><b>Fayllarni yuklang</b><span>Word (.docx, .doc), PDF yoki ZIP. Bir nechtasini yoki butun papkani birdaniga tanlash mumkin. Fayl yo'q bo'lsa — «Yangi ma'lumotnoma».</span></div></li>
+        <li><div><b>Belgilangan joylarni tekshiring</b><span>Dastur ishonchi komil bo'lmagan joylarni sariq rang bilan ko'rsatadi — tasdiqlaysiz yoki tuzatasiz.</span></div></li>
+        <li><div><b>Tayyor fayllarni yuklab oling</b><span>Word yoki PDF — o'zingiz tanlaysiz. Hammasi bitta ZIP arxivda: «Tayyor» va «Tekshirish_kerak» papkalari.</span></div></li>
+      </ol>
+      <div class="card">
+        <div class="kpis" id="kpis">
+        <button type="button" class="kpi" data-f="all" aria-pressed="true"><span>Hammasi</span><b id="sTotal">0</b><small>fayl</small></button>
+        <button type="button" class="kpi ok" data-f="ok" aria-pressed="false"><span>Tayyor</span><b id="sOk">0</b><small id="sOkSub">tasdiqlangan: 0</small></button>
+        <button type="button" class="kpi err" data-f="serious" aria-pressed="false"><span>Jiddiy</span><b id="sSer">0</b><small>asosiy ma'lumot topilmagan</small></button>
+        <button type="button" class="kpi warn" data-f="minor" aria-pressed="false"><span>Kichik</span><b id="sMin">0</b><small>rasm yo'q, imlo tuzatilgan</small></button>
+        <button type="button" class="kpi dupk" data-f="other" aria-pressed="false"><span>Takror va xato</span><b><span id="sDupN">0</span> <em>+ <span id="sErr">0</span></em></b><small id="sOtherSub">takror · o'qilmagan</small></button>
+        <button type="button" class="kpi gonek" data-f="gone" aria-pressed="false" id="kGone" hidden><span>Excel'da yo'q</span><b id="sGone">0</b><small>bazada bunday xodim yo'q</small></button>
+      </div>
+        <div class="tbar">
+          <label class="search"><span hidden>Qidirish</span><input type="search" id="rSearch" placeholder="F.I.Sh. yoki fayl nomi…" autocomplete="off" aria-label="Natijalardan qidirish"></label>
+          <div class="filt" role="radiogroup" aria-label="Holat bo'yicha saralash" id="rFilter" hidden>
+            <label><input type="radio" name="rf" value="all" checked><b>Hammasi</b></label>
+            <label><input type="radio" name="rf" value="ok"><b>Tayyor</b></label>
+            <label><input type="radio" name="rf" value="serious"><b>Jiddiy</b></label>
+            <label><input type="radio" name="rf" value="minor"><b>Kichik</b></label>
+            <label><input type="radio" name="rf" value="other"><b>Takror va xato</b></label>
+            <label><input type="radio" name="rf" value="gone"><b>Excel'da yo'q</b></label>
+            <label><input type="radio" name="rf" value="dup"><b>Takrorlar <em id="fDup">0</em></b></label><span id="fDupL"></span>
+            <label><input type="radio" name="rf" value="err"><b>Xato</b></label>
+            <label><input type="radio" name="rf" value="xl"><b>Excel o'zgarishi <em id="fXl">0</em></b></label><span id="fXlL"></span>
+            <label><input type="radio" name="rf" value="sel"><b>Belgilanganlar</b></label>
+          </div>
+          <span class="fnow" id="fNow" hidden></span>
+          <label class="tsel">Papka <select id="fFolder"><option value="">Hammasi</option></select></label>
+          <label class="tsel" hidden>Bo'lim (Excel) <select id="fDept"><option value="">Hammasi</option></select></label>
+          <label class="tsel">Saralash <select id="fSort"><option value="sev">Avval jiddiylar</option><option value="load">Yuklangan tartibda</option><option value="name">F.I.Sh. bo'yicha</option></select></label>
+        </div>
+        <div class="twrap"><table class="rtable"><thead><tr><th class="c-cb"><input type="checkbox" id="selAll" aria-label="Ko'rinib turganlarning hammasini belgilash"></th><th>F.I.Sh. va papka</th><th>Holat</th><th>Nima qilish kerak</th><th>Hozirgi lavozim</th><th class="c-phh">Rasm, Excel</th><th></th></tr></thead>
+          <tbody id="list" aria-live="polite"></tbody>
+          <tbody id="listEmpty"><tr class="empty"><td colspan="7">Hali fayl yuklanmagan. Yuklangan ma'lumotnomalar shu jadvalda ko'rinadi.</td></tr></tbody></table></div>
+        <div class="pagerow"><div class="pager" id="pager" role="navigation" aria-label="Sahifalar" hidden></div><label class="tsel psz">Sahifada <select id="pSize"><option>20</option><option>50</option><option>100</option></select></label></div>
+        <div class="tfoot">
+          <span id="rInfo"></span>
+          <div class="acts">
+            <button type="button" class="btn2" id="nextWarn" hidden>Tekshiruvni boshlash</button>
+            <button type="button" class="btn2" id="repBtn" hidden>Yakuniy hisobot</button>
+            <button type="button" class="btn2" id="bulkBtn" hidden>Ommaviy tuzatish</button>
+            <button type="button" class="btn2" id="coiBtn" hidden>Manfaatlar to'qnashuvi</button>
+            <span class="fgrp" role="group" aria-label="Fayllar"><button type="button" class="btn2" id="csvAll">Hisobot (CSV)</button>
+            <button type="button" class="btn2" id="bkpSave" title="Butun ish (ma'lumotnomalar, tuzatishlar, Excel, tasdiqlar) bitta faylga — boshqa kompyuterda yoki brauzer tozalangandan keyin tiklash uchun">Zaxira nusxa</button>
+            <button type="button" class="btn2" id="bkpLoad">Zaxiradan tiklash</button></span><input type="file" id="bkpFile" accept=".zip" hidden>
+            <button type="button" class="dangerlink" id="clearAll">Ro'yxatni tozalash</button>
+          </div>
+        </div>
+      </div>
+      <p class="msg" id="bNote"></p>
+      <section class="panel" id="bulk" aria-labelledby="bkH">
+        <details class="xld" id="bulkD"><summary><span class="xlhead"><h2 id="bkH">Ommaviy tuzatish</h2><span>Bir xil xatoni hamma ma'lumotnomada birdan almashtirish</span></span><span class="opt">almashtirish</span></summary>
+        <div class="xlbody">
+          <div class="bulkf">
+            <label><span>Nimani topish</span><input type="text" id="bkFind" autocomplete="off" placeholder="masalan: Термиз Давлат Педагогика Институти"></label>
+            <label><span>Nimaga almashtirish</span><input type="text" id="bkRepl" autocomplete="off" placeholder="masalan: Термиз давлат педагогика институти"></label>
+            <label><span>Qayerda</span><select id="bkScope">
+              <option value="all">Hamma joyda (F.I.Sh.dan tashqari)</option>
+              <option value="cur">Faqat hozirgi lavozim (tepadagi va «h.v.» qatori) — eski yillar o'zgarmaydi</option>
+              <option value="pos">Lavozim va butun mehnat faoliyati</option>
+              <option value="fields">Shaxsiy ma'lumotlar (tug'ilgan joyi, tamomlagan…)</option>
+              <option value="rel">Qarindoshlar jadvali</option>
+            </select></label>
+          </div>
+          <label class="chk"><input type="checkbox" id="bkWord" checked> Faqat butun so'z yoki ibora (so'z ichidagi bo'lakni o'zgartirmaydi)</label>
+          <p class="hint">Katta-kichik harf farqlanmaydi. Kirillda yozsangiz, lotin yozuvdagi ma'lumotnomalarda ham topiladi (va aksincha). Avval «Topish» — nima o'zgarishini ko'rasiz, keyin «Almashtirish».</p>
+          <div class="acts"><button type="button" class="btn2" id="bkPrev">Topish</button><button type="button" class="btn" id="bkApply" disabled>Almashtirish</button><button type="button" class="btn2" id="bkUndo" hidden>Bekor qilish</button></div>
+          <p class="msg" id="bkMsg"></p>
+          <div class="bklist" id="bkList"></div>
+          <div class="bkrules" id="bkRules" hidden>
+            <div class="bkrh"><b>Saqlangan qoidalar</b><span class="hint">Qo'llangan har bir almashtirish shu yerda eslab qolinadi — keyingi oy yangi ZIP'ga bitta tugma bilan qayta qo'llaysiz. Ro'yxatni tozalaganda o'chmaydi.</span><button type="button" class="btn" id="bkRunAll">Hammasini qo'llash</button></div>
+            <ul id="bkRuleList"></ul>
+          </div>
+        </div></details>
+      </section>
+      <section class="panel" id="coi" aria-labelledby="coiH">
+        <details class="xld" id="coiD"><summary><span class="xlhead"><h2 id="coiH">Manfaatlar to'qnashuvi</h2><span>Yaqin qarindoshlardan kim shu tashkilotda ishlayotganini topish</span></span><span class="opt">hisobot</span></summary>
+        <div class="xlbody">
+          <p class="hint"><b>«Manfaatlar to'qnashuvi to'g'risida»gi O'RQ-931-son Qonun</b> (05.06.2024) asosida. Har bir xodimning qarindoshlari ma'lumotnomadagi ish joyi va ismi bo'yicha shu tashkilot xodimlari (ma'lumotnomalar va Excel) bilan solishtiriladi. Faqat Qonunning 3-moddasidagi <b>yaqin qarindoshlar</b> hisobga olinadi: ota-ona, aka-uka, opa-singil, o'g'il, qiz, er-xotin, shuningdek er (xotin)ning ota-onasi, aka-ukasi, opa-singillari va farzandlari.</p>
+          <ul class="coileg">
+            <li><b>1. Faktlar aniqlanadi:</b> qarindoshlik turi (3-modda), shaxs bir odam ekani, shu tashkilotda ishlashi, bevosita bo'ysunish, qarindoshiga oid qarorlarda ishtirok, fuqarolik-huquqiy shartnoma.</li>
+            <li><b>2. Huquqiy asos faktlarga qarab tanlanadi:</b> <span class="risk r3">Mavjud</span> 15-modda (+14, 16; qaror bo'lsa 6-modda) — faqat bo'ysunish, qaror yoki shartnoma fakti aniqlansa; bevosita bo'ysunish yoki nazorat bo'lsa, qo'shimcha ravishda <b>Mehnat kodeksining 121-moddasi</b> (davlat tashkilotida yaqin qarindoshlarning bo'ysunuvda birga xizmat qilishini cheklash; istisnolarni Vazirlar Mahkamasi belgilaydi); <span class="risk r2">Ehtimoliy</span> 17–18-moddalar — bir tashkilotda, bo'ysunish yo'qligi aniqlansa; <span class="risk rq">Aniqlashtirish kerak</span> — fakt yetishmasa modda qo'yilmaydi.</li>
+            <li><b>3. Yetishmagan faktni</b> mas'ul xodim qatorning o'zida belgilaydi — asos qayta tanlanadi.</li>
+          </ul>
+          <p class="hint">Dastur qaror chiqarmaydi — holatlarni saralaydi. Qarorni maxsus bo'linma va odob-axloq komissiyasi qabul qiladi (11, 12, 16-moddalar). Ma'lumotlar xizmat uchun: faqat shu brauzerda qayta ishlanadi.</p>
+          <div class="acts"><button type="button" class="btn" id="coiRun">Tekshirish</button><button type="button" class="btn2" id="coiCsv" hidden>Qayd daftarini Excel'ga yuklab olish</button><button type="button" class="btn2" id="declAllBtn" title="17-modda: har bir xodim uchun deklaratsiya loyihasi — yaqin qarindoshlar va ularning ish joyi ma'lumotnomadan to'ldiriladi">Barcha xodimlarga deklaratsiya (17-modda, ZIP)</button></div>
+          <div class="filt" id="coiFilt" role="group" aria-label="Daraja bo'yicha" hidden>
+            <button type="button" data-l="all" aria-pressed="true">Mavjud va ehtimoliy</button>
+            <button type="button" data-l="open" aria-pressed="false">Hal qilinmaganlar</button>
+            <button type="button" data-l="actual" aria-pressed="false">Mavjud <em id="coiF3">0</em></button>
+            <button type="button" data-l="clarify" aria-pressed="false">Aniqlashtirish kerak <em id="coiFq">0</em></button>
+            <button type="button" data-l="potential" aria-pressed="false">Ehtimoliy <em id="coiF2">0</em></button>
+            <button type="button" data-l="info" aria-pressed="false">Ma'lumot uchun <em id="coiF1">0</em></button>
+          </div>
+          <p class="msg" id="coiMsg"></p>
+          <div class="twrap" id="coiWrap" hidden><table class="rtable coit"><thead><tr><th>#</th><th>Xodim</th><th>Qarindoshi va ish joyi</th><th>Aniqlangan faktlar</th><th>Huquqiy asos</th><th>Holat (qayd daftari)</th></tr></thead><tbody id="coiList"></tbody></table></div>
+        </div></details>
+      </section>
+      <section class="panel" id="xl" aria-labelledby="xlH">
+        <details class="xld" id="xlD"><summary><span class="xlhead"><h2 id="xlH">Excel bilan solishtirish</h2><span>Kadrlar bazasidagi ma'lumot bilan solishtirish va ma'lumotnomasi yo'q xodimga yangi ma'lumotnoma yaratish</span></span><span class="opt">ixtiyoriy</span></summary>
+        <div class="xlbody">
+        <input id="xlFile" type="file" accept=".xlsx,.csv" hidden>
+        <p class="hint" id="xlInfo">Kadrlar bazasi Excel faylini tanlang: dastur ma'lumotnomalarni u bilan solishtiradi va o'zgargan ma'lumotlarni ko'rsatadi. Excel'dan faqat namunadagi maydonlar olinadi.</p>
+        <div class="acts">
+          <button type="button" class="btn2" id="xlLink" hidden title="Kompyuterdagi Excel faylga bog'lanadi: fayl o'zgarsa, ma'lumot o'zi yangilanadi">Kompyuterdagi Excel'ga ulash</button>
+          <button type="button" class="btn2" id="xlRefresh" hidden>Yangilash</button>
+          <button type="button" class="btn2" id="xlPick">Excel faylni tanlash</button>
+        </div>
+        <label class="chk"><input type="checkbox" id="xlPrimary" checked> <span><b>Excel'dagi ma'lumot to'g'ri — farqlarni avtomatik tuzatish.</b> Tug'ilgan sana va joyi, millati, ma'lumoti, tamomlagan, mutaxassisligi, ilmiy daraja, F.I.Sh. imlosi va boshqalar Excel bo'yicha o'zi tuzatiladi. Faqat <b>lavozim, bo'lim yoki tayinlangan sanasi</b> farq qilsa, jadvalda sizga ko'rsatiladi. Siz qo'lda tuzatgan maydonlar o'zgarmaydi; hammasini «Bekor qilish» bilan qaytarish mumkin. Belgini olsangiz — har bir farq taklif sifatida jadvalga tushadi.</span></label>
+        <div class="box"><div id="xlMap" hidden></div><div class="acts" id="xlActs" hidden>
+          <button type="button" class="btn" id="xlRun">Solishtirish</button>
+          <button type="button" class="btn2" id="xlApplyAll" hidden>Barcha o'zgarishlarni qo'llash</button>
+        </div></div>
+        <p class="msg" id="xlMsg"></p>
+        <div id="xlConf" class="xlconf" hidden></div>
+        <div id="xlNew" hidden></div>
+        </div></details>
+      </section>
+    </section>
+
+    <!-- 3. Bo'sh maydonlar: jadvalda to'ldirish -->
+    <section class="view" id="vFill" hidden>
+      <div class="vhead">
+        <h1>Bo'sh maydonlar<small>Topilmagan ma'lumotlarni bitta jadvalda to'ldiring — yozganingiz darhol saqlanadi</small></h1>
+        <button type="button" class="btn2" id="fillForms" title="Bo'sh joylari chiziq bilan chiqqan varaqlar: chop etib, xodimlarga to'ldirishga beriladi">Xodimlarga to'ldirish varaqlari (ZIP)</button>
+      </div>
+      <div class="card">
+        <div class="tbar">
+          <label class="search"><span hidden>Qidirish</span><input type="search" id="fillSearch" placeholder="F.I.Sh. yoki fayl nomi…" autocomplete="off" aria-label="Bo'sh maydonlardan qidirish"></label>
+          <label class="chk"><input type="checkbox" id="fillAll"> Ixtiyoriy maydonlar ham (ilmiy daraja, tillar…)</label>
+        </div>
+        <div class="twrap fillwrap"><table class="rtable fillt"><thead id="fillHead"></thead><tbody id="fillBody"></tbody></table></div>
+        <div class="tfoot"><span id="fillInfo"></span><button type="button" class="btn2" id="fillMore" hidden>Yana 100 ta ko'rsatish</button></div>
+      </div>
+      <p class="msg" id="fillNote"></p>
+    </section>
+
+    <!-- Yo'qlama: Excel'dagi xodimlar ↔ yuklangan ma'lumotnomalar -->
+    <section class="view" id="vCheck" hidden>
+      <div class="vhead">
+        <h1>Yo'qlama<small>Excel'dagi har bir xodimning ma'lumotnomasi ZIP'da bor-yo'qligi</small></h1>
+        <button type="button" class="btn" id="ckCsv"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>Ro'yxatni yuklab olish</button>
+      </div>
+      <p class="msg" id="ckEmpty" hidden></p>
+      <div id="ckBody">
+        <div class="kpis ckk" id="ckKpis">
+          <div class="kpi nf"><span>Excel'dagi xodimlar</span><b id="ckAll">0</b><small id="ckAllS"></small></div>
+          <button type="button" class="kpi ok" data-t="have" aria-pressed="false"><span>Ma'lumotnomasi bor</span><b id="ckHave">0</b><small id="ckHaveS"></small></button>
+          <button type="button" class="kpi bad" data-t="miss" aria-pressed="true"><span>Ma'lumotnomasi yo'q</span><b id="ckMiss">0</b><small>ZIP'da topilmadi</small></button>
+          <button type="button" class="kpi warn" data-t="fuzzy" aria-pressed="false"><span>Ism taxminan mos</span><b id="ckFuz">0</b><small>tekshirib qo'ying</small></button>
+          <button type="button" class="kpi" data-t="extra" aria-pressed="false"><span>Excel'da yo'q</span><b id="ckExtra">0</b><small>ma'lumotnoma bor, Excel'da yo'q</small></button>
+        </div>
+        <div class="card">
+          <div class="tbar">
+            <label class="search"><span hidden>Qidirish</span><input type="search" id="ckQ" placeholder="Familiya yoki ism…" autocomplete="off" aria-label="Qidirish"></label>
+            <label class="tsel">Bo'linma <select id="ckDept"><option value="">Hammasi</option></select></label>
+          </div>
+          <div class="twrap"><table class="rtable ckt"><thead><tr><th>#</th><th>F.I.Sh.</th><th>Bo'linma, lavozim</th><th id="ckH4">Holat</th><th></th></tr></thead><tbody id="ckList"></tbody></table></div>
+          <div class="tfoot"><span id="ckInfo"></span><div class="pager" id="ckPager" role="navigation" aria-label="Sahifalar"></div></div>
+        </div>
+        <p class="hint">Solishtirish F.I.Sh. bo'yicha: kirill va lotin yozuvi, harf xatolari, ism-familiya o'rni almashgani hisobga olinadi. «Ism taxminan mos» — fayl topildi, lekin ism to'liq bir xil emas: to'g'ri xodim ekanini tekshiring. Ma'lumotnomasi yo'q xodimga Excel'dan ma'lumotnoma yaratish mumkin. «Ишдан кетганлар» hisobga olinmaydi.</p>
+        <div class="xldelrow"><button type="button" class="dangerlink" id="xlDel" hidden>Excel'ni o'chirish</button></div>
+      </div>
+    </section>
+
+    <!-- Excel bazasi (alohida bo'lim) -->
+    <section class="view" id="vXl" hidden>
+      <div class="vhead"><h1>Excel bazasi<small>Kadrlar bazasi bilan solishtirish, farqlarni tasdiqlash va ma'lumotnomasi yo'q xodimlarga yangisini yaratish</small></h1></div>
+      <div id="xlSlot"></div>
+    </section>
+
+    <!-- Ommaviy tuzatish va Manfaatlar to'qnashuvi (alohida bo'limlar) -->
+    <section class="view" id="vBulk" hidden>
+      <div class="vhead"><h1>Ommaviy tuzatish<small>Bir xil xatoni hamma ma'lumotnomada birdan almashtirish — saqlangan qoidalar keyingi safar ham ishlaydi</small></h1></div>
+      <div id="bulkSlot"></div>
+    </section>
+    <section class="view" id="vCoi" hidden>
+      <div class="vhead"><h1>Manfaatlar to'qnashuvi<small>Yaqin qarindoshlardan kim shu tashkilotda ishlayotganini topish (O'RQ-931, Mehnat kodeksi 121-modda)</small></h1></div>
+      <div id="coiSlot"></div>
+    </section>
+
+    <!-- Dalillar to'plami: manfaatlar to'qnashuvi holatlari bo'yicha faktlar, manbalar, vaqt chizig'i -->
+    <section class="view" id="vEvid" hidden>
+      <div class="vhead"><h1>Dalillar to'plami<small>Har bir holat bo'yicha faktlar, ularning manbasi va vaqt chizig'i — komissiya uchun. Bu xulosa emas</small></h1><button type="button" class="btn2" id="evAll">Hammasi Word'da (ZIP)</button></div>
+      <div class="evnote"><b>Dastur hech kimni ayblamaydi.</b> U ma'lumotnomalar va Excel'dagi faktlarni yig'adi, har birining manbasini ko'rsatadi va nima hali aniqlanmaganini yozadi. Nepotizm yoki qonunbuzarlik bor-yo'qligini maxsus bo'linma, odob-axloq komissiyasi yoki vakolatli organ hal qiladi. Ma'lumotlar xizmat uchun — faqat shu brauzerda.</div>
+      <div class="card evtools">
+        <div class="tbar"><label class="search"><span hidden>Qidirish</span><input type="search" id="evSearch" placeholder="Xodim yoki qarindosh F.I.Sh.…" autocomplete="off" aria-label="Holatlardan qidirish"></label>
+        <div class="filt evf" role="group" aria-label="Saralash" id="evFilt"><button type="button" data-e="all" aria-pressed="true">Hammasi <em id="evN0"></em></button><button type="button" data-e="hire" aria-pressed="false">Rahbarligida ishga kirgan <em id="evN1"></em></button><button type="button" data-e="nodoc" aria-pressed="false">Hujjat topshirilmagan <em id="evN2"></em></button><button type="button" data-e="need" aria-pressed="false">Aniqlanishi kerak <em id="evN3"></em></button></div></div>
+      </div>
+      <p class="msg" id="evMsg"></p>
+      <div id="evList"></div>
+    </section>
+
+    <!-- Ilmiy salohiyat: ilmiy daraja va unvonlar ro'yxati -->
+    <section class="view" id="vSci" hidden>
+      <div class="vhead"><h1>Ilmiy salohiyat<small>Ilmiy darajasi va ilmiy unvoni bor xodimlar — ma'lumotnomalar yoki kadrlar bazasi Excel'i bo'yicha</small></h1><div class="acts"><button type="button" class="btn2" id="sciXlIn">Excel faylni yuklash</button><button type="button" class="btn" id="sciXlsx"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>Excel'ga yuklab olish</button></div></div>
+      <p class="msg" id="sciSrc"></p>
+      <div class="seg scig" role="tablist" aria-label="Xodimlar guruhi" id="sciG">
+        <button type="button" role="tab" data-g="ped" aria-selected="true">Professor-o'qituvchilar <em id="sciGp"></em></button>
+        <button type="button" role="tab" data-g="oth" aria-selected="false">Boshqa xodimlar <em id="sciGo"></em></button>
+        <button type="button" role="tab" data-g="all" aria-selected="false">Hammasi <em id="sciGa"></em></button>
+      </div>
+      <div class="scik" id="sciK"></div>
+      <div class="card">
+        <div class="tbar"><label class="search"><span hidden>Qidirish</span><input type="search" id="sciSearch" placeholder="F.I.Sh., lavozim yoki fan sohasi…" autocomplete="off" aria-label="Ro'yxatdan qidirish"></label>
+          <label class="tsel">Bo'lim <select id="sciDept"><option value="">Hammasi</option></select></label></div>
+        <div class="evf scif" role="group" aria-label="Toifa bo'yicha" id="sciF"></div>
+        <div class="twrap"><table class="rtable scit"><thead><tr><th>№</th><th>F.I.Sh.</th><th>Lavozimi</th><th>Ilmiy darajasi</th><th>Ilmiy unvoni</th><th>Manba</th></tr></thead><tbody id="sciBody"></tbody></table></div>
+        <div class="tfoot"><span id="sciInfo"></span><div class="pager" id="sciPager" role="navigation" aria-label="Sahifalar"></div></div>
+      </div>
+      <p class="hint">Toifa matndan aniqlanadi: «фан доктори (DSc)», «фалсафа доктори (PhD)», «фан номзоди»; unvon — «профессор», «доцент», «катта илмий ходим». Noaniq yozilganlari «Boshqa» toifasiga tushadi — ma'lumotnomada tekshiring. Ma'lumotnomada bo'sh yoki «йўқ» bo'lsa, Excel'dagi qiymat olinadi (manbada ko'rsatiladi).</p>
+    </section>
+
+    <!-- Takror fayllar (alohida bo'lim) -->
+    <section class="view" id="vDup" hidden>
+      <div class="vhead"><h1>Takrorlar<small>Bitta xodimning bir nechta fayli. Bittasini qoldiring — qolganlari ZIP va hisobotga tushmaydi</small></h1><button type="button" class="btn2" id="dupAuto" hidden>Hammasida eng to'liqini qoldirish</button></div>
+      <p class="msg" id="dupInfo"></p>
+      <div class="dupgs" id="dupList"></div>
+    </section>
+
+    <!-- 4. Rahbarlar to'g'risida ma'lumot (jadval) -->
+    <section class="view" id="vLead" hidden>
+      <div class="vhead">
+        <h1>Rahbarlar ma'lumoti<small>«… раҳбарлари тўғрисида МАЪЛУМОТ» jadvali — ma'lumotnomalar va Excel'dan avtomatik</small></h1>
+        <button type="button" class="btn" id="ldGo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>Word yuklab olish</button>
+      </div>
+      <div class="card ldset">
+        <div class="ldgrid">
+          <label><span>Tashkilot</span><input type="text" id="ldOrg" placeholder="Термиз давлат педагогика институти"></label>
+          <label><span>Sarlavha</span><input type="text" id="ldTitle"></label>
+          <label><span>Holatiga (sana)</span><input type="date" id="ldDate"></label>
+          <label><span>Yozuv</span><select id="ldScr"><option value="cyr">Кирилл</option><option value="lat">Lotin</option></select></label>
+        </div>
+        <div class="ldopts">
+          <label class="tsel">Tartib <select id="ldSort"><option value="excel">Excel'dagidek</option><option value="rank">Lavozim darajasi bo'yicha</option></select></label>
+          <label class="chk"><input type="checkbox" id="ldPhone"> Telefon raqamini Excel'dan olish (shaxsiy ma'lumot — faqat shu jadval uchun)</label>
+        </div>
+      </div>
+      <div class="card">
+        <div class="tbar"><p class="hint" id="ldSrc"></p></div>
+        <div class="twrap"><table class="rtable ldt"><thead><tr><th class="c-cb"></th><th>#</th><th>F.I.Sh.</th><th>Lavozimi (jadvalda) va tayinlangan sana</th><th>Ma'lumot</th><th></th></tr></thead><tbody id="ldList"></tbody></table></div>
+        <div class="tfoot"><span id="ldInfo"></span></div>
+      </div>
+      <p class="hint">Ro'yxat Excel'dagi rahbar kadrlardan tuziladi: rektor, prorektorlar, bo'lim boshliqlari, dekanlar, dekan o'rinbosarlari va kafedra mudirlari (Excel'da «Раҳбар кадрлар» varag'i bo'lsa — aynan o'sha varaqdan). Lavozim, tayinlangan sana, tug'ilgan sana va joy, ilmiy daraja va unvon — Excel'dan; rasm va tamomlagan OTM tafsiloti — xodimning ma'lumotnomasidan. «Ишдан кетганлар» varag'i va bo'limi hisobga olinmaydi. ↑ ↓ bilan tartibni o'zgartirish, belgini olib tashlab jadvaldan chiqarish mumkin.</p>
+      <p class="msg" id="ldNote"></p>
+    </section>
+
+    <!-- 2. Tekshiruv: navbat, varaq, o'zgarishlar -->
+    <section class="view" id="vReview" hidden>
+      <div class="rhead">
+        <button type="button" class="back" id="rBack">← Jadval</button>
+        <div class="ttl">Tekshiruv <small id="rWho"></small></div>
+        <div class="prog"><i><u id="rBar"></u><s id="rBar2"></s></i><span id="rProg">0 / 0</span></div>
+        <span class="saved" id="rSaved"></span>
+      </div>
+      <div class="review">
+        <aside class="queue" aria-label="Navbat">
+          <button type="button" class="qtog" id="qTog" aria-expanded="false" aria-controls="flist"><span id="qTogT">Navbat</span><i aria-hidden="true">▾</i></button>
+          <div class="qseg" role="group" aria-label="Navbat filtri" id="qSeg">
+            <button type="button" data-q="serious" aria-pressed="false">Jiddiy <em id="qSer">0</em></button>
+            <button type="button" data-q="minor" aria-pressed="false">Kichik <em id="qMin">0</em></button>
+            <button type="button" data-q="all" aria-pressed="true">Hammasi</button>
+          </div>
+          <input type="search" id="qSearch" placeholder="Navbatdan qidirish…" aria-label="Navbatdan qidirish" autocomplete="off">
+          <ul class="flist" id="flist"></ul>
+        </aside>
+        <div class="stage" id="stage">
+          <div class="paperwrap">
+            <div class="ptabs" id="pTabs" role="group" aria-label="Ko'rinish">
+              <button type="button" data-p="fixed" aria-pressed="true">Natija</button>
+              <button type="button" data-p="both" aria-pressed="false">Asl hujjat bilan yonma-yon</button>
+              <button type="button" data-p="edit" aria-pressed="false">Tahrirlash</button>
+            </div>
+            <p class="legend" id="pLegend"><span><i class="l2">bo'sh</i>bosib to'ldiring</span><span><i class="l1">so'z</i>dastur tuzatgan</span></p>
+            <div id="pBody"><div class="empty-d">Jadvaldan ma'lumotnomani tanlang yoki «Tekshiruvni boshlash»ni bosing.</div></div>
+          </div>
+          <div class="rside">
+            <section class="rcard rdone" id="rDone" hidden><h2>Hammasi ko'rib chiqildi ✓</h2><p class="msg">Endi tayyor fayllarni Word yoki PDF shaklida yuklab olishingiz mumkin.</p><button type="button" class="btn" id="rZip">Hammasini yuklab olish</button><button type="button" class="btn2" id="rRep">Yakuniy hisobot</button></section>
+            <div class="ract">
+              <button type="button" class="btn" id="dApprove" disabled>Tasdiqlash va keyingisi</button>
+              <div class="row3">
+                <button type="button" class="btn2" id="dPrev">← Oldingi</button>
+                <button type="button" class="btn2" id="dNext">Keyingi →</button>
+                <button type="button" class="btn2" id="dDownload" disabled>Yuklab ▾</button>
+              </div>
+              <p class="msg" id="dNote"></p>
+            </div>
+            <section class="rcard dupc" id="rDupC" hidden><h2>Bu xodimning boshqa fayllari</h2><p class="msg">Bir xil xodim bir necha marta yuklangan. Bittasini qoldiring — qolganlari ZIP'ga tushmaydi.</p><ul class="duplist" id="rDup"></ul></section>
+            <section class="rcard" id="rTodoC"><div class="rch"><h2>To'ldirish kerak</h2><span class="cnt bad" id="rTodoN"></span></div><div class="rfill" id="rFill"></div><ul class="todo" id="rTodo"></ul><div class="acts"><button type="button" class="btn" id="rFillSave" hidden>Saqlash</button><button type="button" class="btn2" id="rFix">Tahrirlash</button></div><p class="hint" id="rFillHint"></p></section>
+            <section class="rcard"><div class="rch"><h2>Dastur o'zgartirdi</h2><span class="cnt good" id="rChgN"></span></div><ul class="chg" id="rChg"></ul></section>
+            <section class="rcard" id="rXlC" hidden><h2>Excel bo'yicha o'zgarishlar</h2><div id="rXl"></div></section>
+            <section class="rcard" id="rHistC" hidden><details><summary><h2>O'zgarishlar tarixi <em id="rHistN"></em></h2></summary><div id="rHist"></div></details></section>
+            <section class="rcard kbdc"><h2>Klaviatura</h2><p class="kbd"><kbd>Ctrl</kbd>+<kbd>Enter</kbd> tasdiqlash · <kbd>←</kbd> <kbd>→</kbd> navbat · <kbd>E</kbd> tahrirlash</p></section>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+<div class="mbar" id="mbar"><button type="button" class="btn2" id="mAdd">Fayl qo'shish</button><button type="button" class="btn" id="mZip">Yuklab olish</button></div>
+<div class="dropov" id="dropov" hidden><div>Fayllarni qo'yib yuboring — ro'yxatga qo'shiladi</div></div>
+<input id="rPhotoIn" type="file" accept="image/*" hidden>
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+<dialog class="help dlg" id="dl" aria-labelledby="dlH">
+  <div class="hh"><h2 id="dlH">Yuklab olish</h2><button type="button" class="x" id="dlX" aria-label="Yopish">×</button></div>
+  <div class="hb">
+    <fieldset class="dlf"><legend>Qaysi ma'lumotnomalar</legend>
+      <div class="dlcards">
+        <label><input type="radio" name="dlScope" value="all" checked><span><b>Hammasi</b><small id="dlAllN"></small></span></label>
+        <label><input type="radio" name="dlScope" value="ok"><span><b>Faqat tayyorlar</b><small id="dlOkN"></small></span></label>
+        <label><input type="radio" name="dlScope" value="sel"><span><b>Belgilanganlar</b><small id="dlSelN"></small></span></label>
+      </div>
+    </fieldset>
+    <fieldset class="dlf"><legend>Shakl</legend>
+      <div class="dlseg">
+        <label><input type="radio" name="dlFmt" value="docx" checked><b>Word (.docx)</b></label>
+        <label><input type="radio" name="dlFmt" value="pdf"><b>PDF</b></label>
+        <label><input type="radio" name="dlFmt" value="both"><b>Word + PDF</b></label>
+      </div>
+    </fieldset>
+    <fieldset class="dlf"><legend>Yozuv</legend>
+      <div class="dlseg">
+        <label><input type="radio" name="script" value="auto" checked><b>Asl holida</b></label>
+        <label><input type="radio" name="script" value="cyr"><b>Кирилл</b></label>
+        <label><input type="radio" name="script" value="lat"><b>Lotin</b></label>
+      </div>
+    </fieldset>
+    <div class="dlchk">
+      <label class="chk"><input type="checkbox" id="dlSplit" checked> «Tayyor» va «Tekshirish_kerak» papkalariga ajratish</label>
+      <label class="chk" id="dlGoneL" hidden><input type="checkbox" id="dlGone" checked> Excel'da yo'q xodimlarni (ishdan ketgan) «Ishdan_ketganlar» papkasiga ajratish <small id="dlGoneN"></small></label>
+      <details id="dlGoneD" hidden><summary class="msg">Kimlar tushadi — tekshiring (belgini olsangiz, xodim odatdagi papkada qoladi)</summary><div class="dlgone" id="dlGoneList"></div></details>
+      <label class="chk" id="dlDeptL" hidden><input type="checkbox" id="dlDept"> Excel'dagi bo'lim/kafedra bo'yicha papkalarga ajratish</label>
+      <label class="chk"><input type="checkbox" id="dlFolders" checked> Asl papkalar tuzilishini saqlash (kafedralar bo'yicha)</label>
+      <label class="chk"><input type="checkbox" id="dlReport" checked> Hisobotni qo'shish (hisobot.csv — Excel'da ochiladi)</label>
+    </div>
+    <div class="dlwarn" id="dlWarn" hidden><span aria-hidden="true">!</span><span id="dlWarnT"></span></div>
+  </div>
+  <div class="hf"><span class="msg" id="dlInfo"></span><button type="button" class="btn2" id="dlCancel">Bekor qilish</button><button type="button" class="btn" id="dlGo">ZIP yuklab olish</button></div>
+</dialog>
+<dialog class="help rep" id="rep" aria-labelledby="repH">
+  <div class="hh"><h2 id="repH">Yakuniy hisobot</h2><button type="button" class="x" id="repX" aria-label="Yopish">×</button></div>
+  <div class="hb" id="repBody"></div>
+  <div class="hf"><span class="msg" id="repNote"></span><button type="button" class="btn2" id="repHist">O'zgarishlar tarixi (CSV)</button><button type="button" class="btn2" id="repPrint">Chop etish</button><button type="button" class="btn" id="repZip">Hammasini yuklab olish</button></div>
+</dialog>
+<dialog class="help" id="help" aria-labelledby="helpH">
+  <div class="hh"><h2 id="helpH">Qanday ishlaydi?</h2><button type="button" class="x" id="helpX" aria-label="Yopish">×</button></div>
+  <div class="hb">
+    <ol>
+      <li><b>Fayllarni yuklang.</b> «Fayllarni shu yerga tashlang» maydoniga Word (.docx, .doc), PDF yoki ZIP faylni tashlang yoki bosib tanlang. Butun papka uchun «Papka qo'shish».</li>
+      <li><b>Kuting.</b> Dastur har bir faylni o'qib, standart shaklga keltiradi. Tepadagi panel nima qilish kerakligini aytib turadi.</li>
+      <li><b>Tekshiring.</b> «Ko'rib chiqishni boshlash»ni bosing. Har bir ma'lumotnomani ko'rib, to'g'ri bo'lsa — «Tasdiqlash va keyingisi», xato bo'lsa — «Tahrirlash».</li>
+      <li><b>Yuklab oling.</b> «Hammasini yuklab olish» — bitta ZIP arxiv: «Tayyor» va «Tekshirish_kerak» papkalari va hisobot.</li>
+    </ol>
+    <h3>Ranglar nimani bildiradi?</h3>
+    <p><span class="chip ok">Tayyor</span> — hammasi topildi. <span class="chip warn">Tekshirish kerak</span> — ba'zi ma'lumot topilmadi yoki dastur taxmin qildi. <span class="chip err">Xato</span> — faylni o'qib bo'lmadi (buzilgan yoki parolli).</p>
+    <p>Varaqda <mark class="q">???</mark> — ma'lumot topilmagan joy: ustiga bossangiz, to'ldirish maydoni ochiladi. Yashil fonli so'zlarni dastur imlo bo'yicha tuzatgan.</p>
+    <h3>Excel kerakmi?</h3>
+    <p>Yo'q, ixtiyoriy. Kadrlar bazasi Excel'ini ulasangiz, dastur lavozim va sanalarni u bilan solishtiradi, ma'lumotnomasi yo'q xodimga yangisini yaratadi.</p>
+    <h3>Manfaatlar to'qnashuvi</h3>
+    <p>«Manfaatlar to'qnashuvi to'g'risida»gi O'RQ-931-son Qonun asosida ishlaydi. Faqat 3-moddadagi yaqin qarindoshlar hisobga olinadi. <b>Mavjud</b> — bevosita bo'ysunish yoki rahbariyat: xodim 1 ish kuni ichida xabarnoma topshiradi (15-modda). Bevosita bo'ysunish yoki nazorat bo'lsa, Mehnat kodeksining 121-moddasi ham ko'rsatiladi: davlat tashkilotida bunday birga xizmat taqiqlanadi, lekin Vazirlar Mahkamasi istisnolar belgilagan (masalan, pedagog xodimlar, kutubxonachilar) — istisno tegishlimi, mas'ul xodim qatorda belgilaydi. <b>Ehtimoliy</b> — bir tashkilotda, bo'ysunishsiz: deklaratsiyada ko'rsatiladi (15-yanvargacha). Har bir holatning yo'li qayd daftarida yuritiladi va Excel'ga chiqariladi; «Xabarnoma loyihasi» 14-modda mazmuni bo'yicha Word fayl beradi — rasmiy namunaviy shakl bo'yicha rasmiylashtiring. Qarorni maxsus bo'linma va odob-axloq komissiyasi qabul qiladi.</p>
+    <h3>Ilmiy salohiyat</h3>
+    <p>Ilmiy darajasi (DSc, PhD, fan nomzodi) va ilmiy unvoni (professor, dotsent) bor xodimlar ro'yxati — professor-o'qituvchilar va boshqa xodimlar alohida. Bo'limga to'g'ridan-to'g'ri kadrlar bazasi Excel'ini yuklash mumkin (ma'lumotnomalarsiz ham). «Excel'ga yuklab olish» .xlsx fayl beradi: «Ro'yxat» (ekrandagi filtr bo'yicha), «Statistika» va «Bo'limlar kesimida» varaqlari.</p>
+    <h3>Dalillar to'plami</h3>
+    <p>Manfaatlar to'qnashuvi holatlari bo'yicha faktlar jamlanadi: qarindosh xodim rahbarlik qilgan davrda ishga kirganmi (mehnat faoliyatidagi yillar bo'yicha), har bir fakt qaysi fayl va qatordan olingani, xabarnoma va deklaratsiya topshirilgani. Har bir holat uchun Word'da «Dalillar varag'i» olinadi. Dastur xulosa chiqarmaydi — qarorni maxsus bo'linma va komissiya qabul qiladi; faktlarni asl buyruqlar bilan tekshiring.</p>
+    <h3>Zaxira nusxa va tarix</h3>
+    <p>«Zaxira nusxa» butun ishni (ma'lumotnomalar, tuzatishlar, Excel va tasdiqlar) bitta ZIP faylga saqlaydi. Boshqa kompyuterda yoki brauzer tozalangandan keyin «Zaxiradan tiklash»ni bosing yoki faylni yuklash maydoniga tashlang. Faylda shaxsiy ma'lumotlar bor — ishonchli joyda saqlang. Har bir ma'lumotnomaning «O'zgarishlar tarixi»da kim (Excel, ommaviy tuzatish, qo'lda) qachon nimani o'zgartirgani ko'rinadi; «Bekor qilish» bir necha qadam orqaga qaytaradi.</p>
+    <h3>Ma'lumotlar xavfsizmi?</h3>
+    <p>Ha. Fayllar faqat shu brauzerda qayta ishlanadi, hech qayerga yuborilmaydi. Ish shu kompyuterning brauzerida saqlanib boradi: sahifani yopib qayta ochsangiz, «Davom ettirish»ni bosasiz. «Ro'yxatni tozalash» saqlangan nusxani ham o'chiradi — umumiy kompyuterda ishni tugatgach, tozalab qo'ying. Chap pastdagi «Umumiy kompyuter» belgilansa, 30 daqiqa ishlatilmaganda ro'yxat va Excel avtomatik o'chiriladi (1 daqiqa oldin ogohlantiriladi, zaxira nusxa olish mumkin). Chapdagi «Xotira» brauzerda qancha joy band ekanini ko'rsatadi; katta rasmlar avtomatik kichraytiriladi.</p>
+    <h3>Takrorlar, ommaviy tuzatish, bo'sh maydonlar</h3>
+    <p>Bitta xodimning bir nechta fayli bo'lsa, jadvalda «2 ta fayl» belgisi chiqadi — tekshiruvda bittasini qoldirasiz. «Ommaviy tuzatish» bir xil xatoni hamma ma'lumotnomada birdan almashtiradi; qo'llangan almashtirishlar «Saqlangan qoidalar»da qoladi va keyingi safar «Hammasini qo'llash» bilan bir bosishda takrorlanadi. Tekshiruvda «Sana:» bilan boshlangan ogohlantirishlar mehnat faoliyatidagi yillar tartibi yoki tepadagi sana mos kelmasligini bildiradi. «Bo'sh maydonlar» bo'limida topilmagan ma'lumotlarni bitta jadvalda yozasiz yoki xodimlarga to'ldirish varaqlarini chop etasiz.</p>
+  </div>
+</dialog>
+<script src="vendor/jszip.min.js"></script>
+<script src="js/core.js?v=f763a8861c"></script>
+<script src="js/app.js?v=be9c16bc0c"></script>
+</body>
+</html>
