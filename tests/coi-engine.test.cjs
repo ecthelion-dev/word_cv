@@ -122,6 +122,21 @@ test('links an identical shared-relative name despite a two-year birth-date disc
   assert.equal(result.yearGap, 2);
 });
 
+test('finds Qurbanoy Saidova as the shared relative in the reported 1979/1977 documents', () => {
+  const group = {
+    parts: { sur: 'saidova', giv: 'qurbonoy', testScore: 1 },
+    birth: 1979,
+    links: [{ rel: 'Turmush o‘rtog‘i' }]
+  };
+  const target = { sur: 'saidova', giv: 'qurbonoy', testScore: 1 };
+  const result = CoiEngine.findSharedRelative(target, 1977, [group], {
+    nameScore: (_target, candidate) => candidate.testScore
+  });
+  assert.equal(result.group, group);
+  assert.equal(result.yearMismatch, true);
+  assert.equal(result.yearGap, 2);
+});
+
 test('does not merge exact-name relative records with implausibly distant birth years', () => {
   const group = { parts: { sur: 'saidova', giv: 'qurbonoy' }, birth: 1979, links: [] };
   const result = CoiEngine.findSharedRelative(
