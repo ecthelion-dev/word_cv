@@ -73,7 +73,7 @@ test('OCR reads each scanned PDF page in order and creates parser blocks', async
     { createCanvas: mocks.createCanvas }
   );
   assert.equal(result.data.ocr, true);
-  assert.equal(result.textParts.join(' '), 'Birinchi sahifa matni Ikkinchi sahifa matni');
+  assert.equal(result.textParts.join(' '), 'Birinchi sahifa matni: Bosimova Mahliyo Dilshod qizi Ikkinchi sahifa matni: yaqin qarindoshlari haqida ma’lumot');
   assert.equal(result.data.blocks.length, 2);
   assert.match(result.warnings[0], /OCR orqali avtomatik tanildi/);
   assert.equal(mocks.seenPages.length, 2);
