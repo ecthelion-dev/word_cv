@@ -61,11 +61,11 @@ function makeMocks(pageTexts = ['Page one text', 'Page two text']) {
     }
   };
   return { pdfjs, tesseract, core, createCanvas, seenLanguages, seenPages, canvases,
-    get terminated() { return terminated; }, get destroyed() { return destroyed; } };
+    markTerminated() { terminated = true; }, get terminated() { return terminated; }, get destroyed() { return destroyed; } };
 }
 
 test('OCR reads each scanned PDF page in order and creates parser blocks', async () => {
-  const mocks = makeMocks(['Birinchi sahifa matni', 'Ikkinchi sahifa matni']);
+  const mocks = makeMocks(['Birinchi sahifa matni: Bosimova Mahliyo Dilshod qizi', 'Ikkinchi sahifa matni: yaqin qarindoshlari haqida ma’lumot']);
   const progress = [];
   const result = await ScannedPdfOcr.analyze(
     mocks.pdfjs, new Uint8Array([1, 2]), mocks.tesseract, mocks.core,
@@ -83,7 +83,7 @@ test('OCR reads each scanned PDF page in order and creates parser blocks', async
 });
 
 test('OCR loads Uzbek Latin, Uzbek Cyrillic, Russian and English data', async () => {
-  const mocks = makeMocks();
+  const mocks = makeMocks(['Namuna ma’lumotnoma matni o‘qilmoqda', 'Ikkinchi sahifada jadval ma’lumotlari mavjud']);
   await ScannedPdfOcr.analyze(
     mocks.pdfjs, new Uint8Array([1]), mocks.tesseract, mocks.core, {},
     { createCanvas: mocks.createCanvas }
@@ -122,7 +122,7 @@ test('terminates OCR worker and PDF document after OCR error', async () => {
   const mocks = makeMocks();
   mocks.tesseract.createWorker = async () => ({
     async recognize() { throw new Error('synthetic OCR failure'); },
-    async terminate() { mocks.terminated = true; }
+    async terminate() { mocks.markTerminated(); }
   });
   await assert.rejects(
     ScannedPdfOcr.analyze(
