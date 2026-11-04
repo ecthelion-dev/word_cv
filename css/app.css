@@ -820,3 +820,18 @@ th.c-phh{white-space:nowrap}
 .coi-page-actions .btn2{padding:7px 12px}
 .coi-page-actions .btn2:disabled{opacity:.45;cursor:not-allowed}
 @media(max-width:600px){.coi-tools{align-items:stretch}.coi-search{flex-basis:100%}.coi-size{min-width:120px}.coi-pagination{align-items:flex-start}.coi-page-actions{width:100%}.coi-page-actions .btn2{flex:1}}
+
+
+/* Scientific capacity: searchable, auditable roster */
+#vSci .sci-toolbar{align-items:end;flex-wrap:wrap;gap:8px 12px}
+#vSci .sci-toolbar .search{flex:1 1 300px;min-width:230px}
+#vSci .sci-toolbar .tsel{flex:0 1 auto}
+#vSci .sci-toolbar select{max-width:220px}
+.scik{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+.scik .sk.warn{border-color:#d8b66b;background:#fffaf0}
+.scik .sk.warn b{color:#8b5b08}
+.scit td small.sci-issue{color:#8b5b08;background:#fff7e6;border-radius:5px;padding:3px 5px;margin-top:5px}
+.scit td small.sci-source{color:var(--muted)}
+.scif button[data-filter="review"]{border-color:#d8b66b}
+.scif button[data-filter="conflict"]{border-color:#d8b66b}
+@media(max-width:700px){#vSci .sci-toolbar .search{flex-basis:100%}#vSci .sci-toolbar .tsel{flex:1 1 140px}#vSci .sci-toolbar select{max-width:none;width:100%}}
