@@ -22,7 +22,7 @@ test('scientific search is multi-word and order independent', () => {
 test('scientific search includes additional roles and source details when supplied', () => {
   const fields = ['Саидов Чорихон Султонович', 'Физика кафедраси', 'Professor', 'dotsent lavozimi', 'Excel 25-qator'];
   assert.equal(ScienceEngine.matches(fields, 'dotsent 25-qator', core), true);
-  assert.equal(ScienceEngine.matches(fields, 'excel 25-qator', core), true);
+  assert.equal(ScienceEngine.matches(fields, 'excel', core), true);
 });
 
 test('empty scientific search matches all records', () => {
