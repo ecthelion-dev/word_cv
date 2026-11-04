@@ -53,6 +53,9 @@ test('classifies relationship categories for indirect-link analysis', () => {
   assert.equal(CoiEngine.relationshipType('Амакиси', core), 'other');
   assert.equal(CoiEngine.relationshipType('Turmush o‘rtog‘ining farzandi', core), 'child');
   assert.equal(CoiEngine.relationKind('Erining onasi', core), 'close');
+  assert.equal(CoiEngine.relationKind('Erining akasi', core), 'close');
+  assert.equal(CoiEngine.relationKind('Otasi singlisi', core), 'other');
+  assert.equal(CoiEngine.relationKind('Turmush o‘rtog‘ining amakisi', core), 'other');
 });
 
 test('uses a matching birth year to break a near-equal name match', () => {
