@@ -107,7 +107,7 @@
     else if (core && typeof core.latToCyr === "function") name = core.latToCyr(name);
     if (core && typeof core.norm === "function") name = core.norm(name);
     else name = name.toLowerCase().normalize("NFKC");
-    return String(name).toLowerCase().replace(/[^\\p{L}\\p{N}]/gu, "");
+    return String(name).toLowerCase().replace(/[^\p{L}\p{N}]/gu, "");
   }
 
   // Exact normalized full-name identity check. Deliberately avoids fuzzy
