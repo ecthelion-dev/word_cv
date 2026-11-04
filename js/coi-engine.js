@@ -159,10 +159,10 @@
       const groupYear = Number.isInteger(group.birth) ? group.birth : null;
       const hasBothYears = Number.isInteger(targetYear) && groupYear != null;
       const yearGap = hasBothYears ? Math.abs(targetYear - groupYear) : null;
-      const exactIdentity = score >= 0.97;
+      const strongNameMatch = score >= 0.97 && (!hasBothYears || yearGap <= 5);
       const safeFuzzyIdentity = score >= 0.92 && (!hasBothYears || yearGap <= 1);
 
-      if (!exactIdentity && !safeFuzzyIdentity) continue;
+      if (!strongNameMatch && !safeFuzzyIdentity) continue;
       candidates.push({
         group, score, yearGap,
         yearMismatch: hasBothYears && yearGap > 1,
