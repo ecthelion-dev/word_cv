@@ -69,6 +69,24 @@ test('recognizes duplicate employee records as the same person', () => {
   );
 });
 
+test('does not merge same-name people when their known birth years differ', () => {
+  assert.equal(
+    CoiEngine.samePerson('Киёмов Абдулла Хайиталиевич', 'Киёмов Абдулла Хайиталиевич', core, 1975, 1988),
+    false
+  );
+  assert.equal(
+    CoiEngine.samePerson('Киёмов Абдулла Хайиталиевич', 'Киёмов Абдулла Хайиталиевич', core, 1975, 1976),
+    true
+  );
+});
+
+test('normalizes punctuation and whitespace when comparing identity', () => {
+  assert.equal(
+    CoiEngine.samePerson('Ташматов Бахром Мусурманович', 'Ташматов, Бахром   Мусурманович', core),
+    true
+  );
+});
+
 test('does not merge different or merely similar employee names', () => {
   assert.equal(
     CoiEngine.samePerson('Киёмов Абдулла Хайиталиевич', 'Киёмов Абдулла Хайитович', core),
