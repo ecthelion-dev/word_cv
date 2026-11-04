@@ -107,3 +107,15 @@ npx serve .
 - Ilmiy salohiyat Excel eksportida ham tekshiruv belgisi va manbalar tafovuti alohida ustunlarda beriladi.
 
 Ilmiy dashboard yordamchi saralash va tekshirish vositasidir. «Boshqa» yoki manbalar tafovuti bilan belgilangan yozuvlar asl hujjat va kadrlar bazasi bo‘yicha mas’ul xodim tomonidan ko‘rib chiqilishi kerak.
+
+
+## Kafedralar kesimida ilmiy salohiyat reytingi
+
+- Reyting faqat professor-o‘qituvchilar guruhi uchun tuziladi; tashqi o‘rindoshlar chiqarib tashlanadi.
+- Asosiy ko‘rsatkich: (DSc + PhD + fan nomzodi) / kafedradagi professor-o‘qituvchilar soni × 100%.
+- «Boshqa/noaniq» daraja qiymati tan olingan ilmiy daraja sifatida foizga qo‘shilmaydi; alohida tekshiriladi.
+- Professor va dotsent ilmiy unvonlari reyting foiziga ta’sir qilmaydi; alohida sonlarda ko‘rsatiladi.
+- Kafedra nomlari kirill/lotin yozuvi normallashtirilgandan keyin guruhlanadi; taxminiy nom o‘xshashligi bo‘yicha birlashtirilmaydi.
+- 5 nafardan kam xodimli kafedralar reytingda qoladi, ammo «kam sonli tanlanma» deb belgilanadi.
+- Bo‘limi aniqlanmagan xodimlar umumiy foizda hisobga olinadi, ammo kafedralar reytingiga kiritilmaydi.
+- Excel eksportiga «Kafedralar reytingi» varag‘i va hisoblash metodikasi qo‘shiladi.
