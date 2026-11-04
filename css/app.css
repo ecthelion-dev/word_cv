@@ -805,3 +805,18 @@ th.c-phh{white-space:nowrap}
 .scig button em{font-style:normal;font-weight:700;margin-left:4px;opacity:.8}
 .scit td small.orin{color:#7a4300}
 #vSci .vhead .acts{display:flex;gap:8px;flex-wrap:wrap}
+
+
+/* Manfaatlar to'qnashuvi: search and pagination */
+.coi-tools{display:flex;align-items:end;gap:12px;flex-wrap:wrap;padding:12px 0 4px}
+.coi-tools label{display:flex;flex-direction:column;gap:5px;font-size:12px;font-weight:600;color:var(--muted)}
+.coi-search{flex:1 1 320px;min-width:220px}
+.coi-search input{width:100%;min-width:0;font:14px var(--font-body);padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--sunk);color:var(--ink)}
+.coi-search input:focus,.coi-size select:focus{outline:2px solid var(--accent);outline-offset:1px;border-color:var(--accent)}
+.coi-size select{font:14px var(--font-body);padding:9px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink)}
+.coi-search-count{font-size:12.5px;color:var(--muted);padding:0 0 9px}
+.coi-pagination{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;padding:12px 2px 2px;color:var(--muted);font-size:13px}
+.coi-page-actions{display:flex;gap:7px}
+.coi-page-actions .btn2{padding:7px 12px}
+.coi-page-actions .btn2:disabled{opacity:.45;cursor:not-allowed}
+@media(max-width:600px){.coi-tools{align-items:stretch}.coi-search{flex-basis:100%}.coi-size{min-width:120px}.coi-pagination{align-items:flex-start}.coi-page-actions{width:100%}.coi-page-actions .btn2{flex:1}}

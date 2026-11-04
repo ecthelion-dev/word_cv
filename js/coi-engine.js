@@ -122,6 +122,25 @@
     return !hasBothYears || Math.abs(firstBirthYear - secondBirthYear) <= 1;
   }
 
+  function searchKey(value, core) {
+    let text = String(value == null ? "" : value);
+    if (core && typeof core.cyrToLat === "function") text = core.cyrToLat(text);
+    if (core && typeof core.norm === "function") return String(core.norm(text)).toLowerCase();
+    return text.normalize("NFKC").toLowerCase().replace(/[^\p{L}\p{N}]/gu, "");
+  }
+
+  function searchTokens(query, core) {
+    return String(query == null ? "" : query).trim().split(/\s+/)
+      .map((token) => searchKey(token, core)).filter(Boolean);
+  }
+
+  function matchesSearch(fields, query, core) {
+    const tokens = searchTokens(query, core);
+    if (!tokens.length) return true;
+    const haystack = searchKey((Array.isArray(fields) ? fields : [fields]).join(" "), core);
+    return tokens.every((token) => haystack.includes(token));
+  }
+
   /**
    * Find the most defensible roster match for a relative's name.
    * A birth-year conflict (>1 year) disqualifies a candidate when both years
@@ -199,6 +218,6 @@
   }
 
   return Object.freeze({
-    canonicalText, relationKind, relationshipType, siblingKind, genderFromName, samePerson, findBestMatch
+    canonicalText, relationKind, relationshipType, siblingKind, genderFromName, samePerson, searchTokens, matchesSearch, findBestMatch
   });
 });
