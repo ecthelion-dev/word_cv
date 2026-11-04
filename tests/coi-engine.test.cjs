@@ -111,6 +111,57 @@ test('searches across multiple fields without requiring the same word order', ()
   assert.equal(CoiEngine.matchesSearch(['Abdulla Qiyomov'], '   ', core), true);
 });
 
+test('links an identical shared-relative name despite a two-year birth-date discrepancy', () => {
+  const group = { parts: { sur: 'saidova', giv: 'qurbonoy' }, birth: 1979, links: [] };
+  const target = { sur: 'saidova', giv: 'qurbonoy' };
+  const result = CoiEngine.findSharedRelative(target, 1977, [group], {
+    nameScore: () => 1
+  });
+  assert.equal(result.group, group);
+  assert.equal(result.yearMismatch, true);
+  assert.equal(result.yearGap, 2);
+});
+
+test('finds Qurbanoy Saidova as the shared relative in the reported 1979/1977 documents', () => {
+  const group = {
+    parts: { sur: 'saidova', giv: 'qurbonoy', testScore: 1 },
+    birth: 1979,
+    links: [{ rel: 'Turmush o‘rtog‘i' }]
+  };
+  const target = { sur: 'saidova', giv: 'qurbonoy', testScore: 1 };
+  const result = CoiEngine.findSharedRelative(target, 1977, [group], {
+    nameScore: (_target, candidate) => candidate.testScore
+  });
+  assert.equal(result.group, group);
+  assert.equal(result.yearMismatch, true);
+  assert.equal(result.yearGap, 2);
+});
+
+test('does not merge exact-name relative records with implausibly distant birth years', () => {
+  const group = { parts: { sur: 'saidova', giv: 'qurbonoy' }, birth: 1979, links: [] };
+  const result = CoiEngine.findSharedRelative(
+    { sur: 'saidova', giv: 'qurbonoy' }, 1990, [group], { nameScore: () => 1 }
+  );
+  assert.equal(result.group, null);
+});
+
+test('still rejects weak fuzzy shared-relative matches with conflicting birth years', () => {
+  const group = { parts: { sur: 'saidova', giv: 'qurbonoy' }, birth: 1979, links: [] };
+  const result = CoiEngine.findSharedRelative(
+    { sur: 'saidova', giv: 'qurbonoy' }, 1977, [group], { nameScore: () => 0.94 }
+  );
+  assert.equal(result.group, null);
+});
+
+test('accepts a strong shared-relative match with the same birth year without a warning', () => {
+  const group = { parts: { sur: 'saidova', giv: 'qurbonoy' }, birth: 1979, links: [] };
+  const result = CoiEngine.findSharedRelative(
+    { sur: 'saidova', giv: 'qurbonoy' }, 1979, [group], { nameScore: () => 1 }
+  );
+  assert.equal(result.group, group);
+  assert.equal(result.yearMismatch, false);
+});
+
 test('uses a matching birth year to break a near-equal name match', () => {
   const first = { name: 'Candidate A', by: 1980, parts: { testScore: 0.972 } };
   const second = { name: 'Candidate B', by: 1986, parts: { testScore: 0.978 } };
