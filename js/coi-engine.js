@@ -126,11 +126,11 @@
     let text = String(value == null ? "" : value);
     if (core && typeof core.cyrToLat === "function") text = core.cyrToLat(text);
     if (core && typeof core.norm === "function") return String(core.norm(text)).toLowerCase();
-    return text.normalize("NFKC").toLowerCase().replace(/[^\\p{L}\\p{N}]/gu, "");
+    return text.normalize("NFKC").toLowerCase().replace(/[^\p{L}\p{N}]/gu, "");
   }
 
   function searchTokens(query, core) {
-    return String(query == null ? "" : query).trim().split(/\\s+/)
+    return String(query == null ? "" : query).trim().split(/\s+/)
       .map((token) => searchKey(token, core)).filter(Boolean);
   }
 
