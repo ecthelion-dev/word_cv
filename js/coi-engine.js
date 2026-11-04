@@ -100,6 +100,25 @@
     return "";
   }
 
+  function personNameKey(value, core) {
+    let name = String(value == null ? "" : value).trim();
+    if (!name) return "";
+    if (core && typeof core.cyrToLat === "function") name = core.cyrToLat(name);
+    else if (core && typeof core.latToCyr === "function") name = core.latToCyr(name);
+    if (core && typeof core.norm === "function") name = core.norm(name);
+    else name = name.toLowerCase().normalize("NFKC");
+    return String(name).toLowerCase().replace(/[^\\p{L}\\p{N}]/gu, "");
+  }
+
+  // Exact normalized full-name identity check. Deliberately avoids fuzzy
+  // matching: two similar names are not enough to assert that two records
+  // belong to the same person.
+  function samePerson(firstName, secondName, core) {
+    const first = personNameKey(firstName, core);
+    const second = personNameKey(secondName, core);
+    return !!first && first === second;
+  }
+
   /**
    * Find the most defensible roster match for a relative's name.
    * A birth-year conflict (>1 year) disqualifies a candidate when both years
@@ -177,6 +196,6 @@
   }
 
   return Object.freeze({
-    canonicalText, relationKind, relationshipType, siblingKind, genderFromName, findBestMatch
+    canonicalText, relationKind, relationshipType, siblingKind, genderFromName, samePerson, findBestMatch
   });
 });
