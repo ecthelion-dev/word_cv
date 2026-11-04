@@ -142,6 +142,42 @@
   }
 
   /**
+   * Groups the same relative across employee records.
+   * A very strong full-name match can still be linked when birth years differ,
+   * but the discrepancy is returned so the UI can require manual confirmation.
+   * Weaker fuzzy matches are only grouped when the available birth years agree.
+   */
+  function findSharedRelative(targetParts, targetYear, groups, core) {
+    if (!targetParts || !core || typeof core.nameScore !== "function") {
+      return { group: null, yearMismatch: false, yearGap: null, score: 0 };
+    }
+
+    const candidates = [];
+    for (const group of groups || []) {
+      if (!group || !group.parts) continue;
+      const score = Number(core.nameScore(targetParts, group.parts)) || 0;
+      const groupYear = Number.isInteger(group.birth) ? group.birth : null;
+      const hasBothYears = Number.isInteger(targetYear) && groupYear != null;
+      const yearGap = hasBothYears ? Math.abs(targetYear - groupYear) : null;
+      const exactIdentity = score >= 0.97;
+      const safeFuzzyIdentity = score >= 0.92 && (!hasBothYears || yearGap <= 1);
+
+      if (!exactIdentity && !safeFuzzyIdentity) continue;
+      candidates.push({
+        group, score, yearGap,
+        yearMismatch: hasBothYears && yearGap > 1,
+        rank: score + (hasBothYears && yearGap === 0 ? 0.02 : 0)
+      });
+    }
+
+    candidates.sort((a, b) => b.rank - a.rank || b.score - a.score);
+    const best = candidates[0];
+    return best
+      ? { group: best.group, yearMismatch: best.yearMismatch, yearGap: best.yearGap, score: best.score }
+      : { group: null, yearMismatch: false, yearGap: null, score: 0 };
+  }
+
+  /**
    * Find the most defensible roster match for a relative's name.
    * A birth-year conflict (>1 year) disqualifies a candidate when both years
    * exist. Matching birth years break close name-score ties. Near-equal names
@@ -218,6 +254,6 @@
   }
 
   return Object.freeze({
-    canonicalText, relationKind, relationshipType, siblingKind, genderFromName, samePerson, searchTokens, matchesSearch, findBestMatch
+    canonicalText, relationKind, relationshipType, siblingKind, genderFromName, samePerson, searchTokens, matchesSearch, findSharedRelative, findBestMatch
   });
 });
