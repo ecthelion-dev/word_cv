@@ -113,10 +113,13 @@
   // Exact normalized full-name identity check. Deliberately avoids fuzzy
   // matching: two similar names are not enough to assert that two records
   // belong to the same person.
-  function samePerson(firstName, secondName, core) {
+  function samePerson(firstName, secondName, core, firstBirthYear, secondBirthYear) {
     const first = personNameKey(firstName, core);
     const second = personNameKey(secondName, core);
-    return !!first && first === second;
+    if (!first || first !== second) return false;
+
+    const hasBothYears = Number.isInteger(firstBirthYear) && Number.isInteger(secondBirthYear);
+    return !hasBothYears || Math.abs(firstBirthYear - secondBirthYear) <= 1;
   }
 
   /**
