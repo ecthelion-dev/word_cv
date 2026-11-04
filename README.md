@@ -58,6 +58,21 @@ O'zbekistondagi tashkilotlar va OTMlar kadrlar bo'limi uchun spravka-ob'ektivka 
 
 ---
 
+## 🧩 Arxitektura va testlar
+
+- `js/core.js` — DOC/DOCX/PDF parsing, standartlashtirish va hujjat generatorlari.
+- `js/coi-engine.js` — manfaatlar to‘qnashuvi modulining sof qoidalari: qarindoshlik turini aniqlash va xodimlar ro‘yxatidan nomzodlarni solishtirish.
+- `js/app.js` — foydalanuvchi interfeysi va ish jarayoni.
+- `tests/coi-engine.test.cjs` — qarindoshlik klassifikatsiyasi va ism/tug‘ilgan yil mosligi uchun avtomatik testlar.
+
+Testlarni ishga tushirish:
+
+```bash
+npm test
+```
+
+Ism bo‘yicha bir nechta o‘xshash xodim topilsa, tizim ularning birini avtomatik ravishda aniq shaxs deb belgilamaydi — holat mas’ul xodim tomonidan tasdiqlanishi kerak. Tug‘ilgan yillar mavjud bo‘lib, bir yildan ko‘proq farq qilsa, nomzod avtomatik moslikdan chiqariladi.
+
 ## 🛠 Mahalliy ishga tushirish (Local Run)
 
 Loyiha sof statik veb-ilova bo'lib, veb-server orqali ishga tushiriladi (Web Workerlar ishlashi uchun):
