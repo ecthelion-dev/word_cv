@@ -10,15 +10,24 @@
 })(typeof window !== "undefined" ? window : globalThis, function createCoiEngine() {
   "use strict";
 
-  const CLOSE_PREFIXES = [
-    "ота", "она", "угил", "угли", "огли", "киз", "фарзанд",
-    "ака", "ука", "опа", "сингил", "сингл",
-    "турмушуртог", "умрйулдош", "ери", "ерим", "хотин", "рафик",
-    "каинота", "каинона", "каиниака", "каиниука", "каиниопа",
-    "каинисингил", "каинсингил", "каини", "каино", "каин",
+  const CLOSE_LABELS = new Set([
+    "ота", "отаси", "она", "онаси",
+    "ака", "акаси", "ука", "укаси", "опа", "опаси", "сингил", "синглиси",
+    "угил", "угли", "киз", "кизи", "фарзанд", "фарзанди",
+    "турмушуртог", "турмушуртоги", "умрйулдош", "умрйулдоши",
+    "ер", "ери", "ерим", "хотин", "хотини", "рафика", "рафикаси",
+    "каинота", "каинотаси", "каинона", "каинонаси", "каиногаси",
+    "каиниакаси", "каиниукаси", "каиниопаси", "каинсингили"
+  ]);
+  const SPOUSE_RELATIVE_PREFIXES = [
     "турмушуртогининг", "умрйулдошининг", "ерининг", "эрининг",
     "хотинининг", "рафикасининг"
   ];
+  const SPOUSE_RELATIVE_LABELS = new Set([
+    "ота", "отаси", "она", "онаси",
+    "ака", "акаси", "ука", "укаси", "опа", "опаси", "сингил", "синглиси",
+    "угил", "угли", "киз", "кизи", "фарзанд", "фарзанди"
+  ]);
 
   function canonicalText(value, core) {
     let text = String(value == null ? "" : value).trim();
@@ -43,11 +52,13 @@
   function relationKind(value, core) {
     const compact = compactText(value, core);
     if (!compact) return "other";
-    // These relations are not included in the statutory close-relative list.
-    if (/^(?:амаки|амакиси|аммаси|тогаси|холаси|жияни|набера|буваси|бувиси)/.test(compact)) {
-      return "other";
-    }
-    return CLOSE_PREFIXES.some((prefix) => compact.startsWith(prefix)) ? "close" : "other";
+    if (CLOSE_LABELS.has(compact)) return "close";
+
+    // A spouse's parents, siblings and children are included; their extended
+    // relatives (for example, the spouse's uncle) are not inferred as close.
+    const prefix = SPOUSE_RELATIVE_PREFIXES.find((item) => compact.startsWith(item));
+    if (!prefix) return "other";
+    return SPOUSE_RELATIVE_LABELS.has(compact.slice(prefix.length)) ? "close" : "other";
   }
 
   function relationshipType(value, core) {
