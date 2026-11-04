@@ -20,6 +20,7 @@ jobs:
           node --check js/science-engine.js
           node --check js/pdf-engine.js
           node --check js/file-error.js
+          node --check js/scanned-pdf-ocr.js
           node --check js/parseworker.js
           node --check js/app.js
       - name: Run unit tests
