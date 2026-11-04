@@ -70,6 +70,8 @@
     const threshold = Number.isInteger(minSample) && minSample > 0 ? minSample : 5;
     const groups = new Map();
     let unassigned = 0;
+    let unassignedDegreeHolders = 0;
+    let unassignedReview = 0;
     let total = 0;
 
     for (const row of rows || []) {
@@ -79,6 +81,8 @@
       const key = departmentKey(displayName, core);
       if (!key) {
         unassigned += 1;
+        if (["dsc", "phd", "nomzod"].includes(row.dk)) unassignedDegreeHolders += 1;
+        if (quality(row).needsReview) unassignedReview += 1;
         continue;
       }
 
@@ -155,7 +159,12 @@
       departmentCount: departments.length,
       ratedDepartmentCount: departments.filter(group => !group.smallSample).length,
       minSample: threshold,
-      degreeHolders: departments.reduce((sum, group) => sum + group.degreeHolders, 0),
+      degreeHolders: departments.reduce((sum, group) => sum + group.degreeHolders, 0) + unassignedDegreeHolders,
+      degreeRate: total
+        ? Math.round((departments.reduce((sum, group) => sum + group.degreeHolders, 0) + unassignedDegreeHolders) / total * 1000) / 10
+        : 0,
+      unassignedDegreeHolders,
+      unassignedReview,
       departments
     };
   }
