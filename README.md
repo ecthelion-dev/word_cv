@@ -95,3 +95,15 @@ npx serve .
 - **GitHub Pages:** Repozitoriy sozlamalaridan `Pages` bo'limiga kirib, `main` tarmog'ini tanlash kifoya.
 - **Netlify:** Loyiha papkasini to'g'ridan-to'g'ri Netlify boshqaruv paneliga sudrab tashlash (`drag & drop`) mumkin. `_headers` fayli Netlify xavfsizlik va keshlash siyosatini avtomatik sozlaydi.
 
+
+
+## Ilmiy salohiyat bo‘limi
+
+- Qidiruv bir nechta so‘zni istalgan tartibda qabul qiladi; xodim F.I.Sh., bo‘lim, daraja, unvon, manba va qo‘shimcha lavozimlar bo‘yicha qidiriladi.
+- Ro‘yxatni F.I.Sh., bo‘lim, ilmiy daraja yoki unvon bo‘yicha tartiblash, sahifada 20/50/100 qator ko‘rsatish mumkin.
+- Ilmiy daraja va unvon alohida tekshiriladi: hujjat va Excel qiymatlari tasnif bo‘yicha farq qilsa, yozuv «Tekshirish kerak» holatiga chiqariladi.
+- «Boshqa» deb tasniflangan qiymatlar va daraja/unvon mavjud bo‘lmagan xodimlar uchun alohida filtrlar mavjud.
+- Tashqi o‘rindoshlik ma’lumotnomada yoki Excel’da ko‘rsatilgan bo‘lsa, yozuv umumiy ilmiy salohiyat ro‘yxatidan chiqariladi.
+- Ilmiy salohiyat Excel eksportida ham tekshiruv belgisi va manbalar tafovuti alohida ustunlarda beriladi.
+
+Ilmiy dashboard yordamchi saralash va tekshirish vositasidir. «Boshqa» yoki manbalar tafovuti bilan belgilangan yozuvlar asl hujjat va kadrlar bazasi bo‘yicha mas’ul xodim tomonidan ko‘rib chiqilishi kerak.
