@@ -58,6 +58,25 @@ test('classifies relationship categories for indirect-link analysis', () => {
   assert.equal(CoiEngine.relationKind('Turmush o‘rtog‘ining amakisi', core), 'other');
 });
 
+test('recognizes duplicate employee records as the same person', () => {
+  assert.equal(
+    CoiEngine.samePerson('Киёмов Абдулла Хайиталиевич', 'Киёмов Абдулла Хайиталиевич', core),
+    true
+  );
+  assert.equal(
+    CoiEngine.samePerson('Ташматов Бахром Мусурманович', 'Ташматов  Бахром Мусурманович', core),
+    true
+  );
+});
+
+test('does not merge different or merely similar employee names', () => {
+  assert.equal(
+    CoiEngine.samePerson('Киёмов Абдулла Хайиталиевич', 'Киёмов Абдулла Хайитович', core),
+    false
+  );
+  assert.equal(CoiEngine.samePerson('Абдулла Киёмов', 'Бахром Ташматов', core), false);
+});
+
 test('uses a matching birth year to break a near-equal name match', () => {
   const first = { name: 'Candidate A', by: 1980, parts: { testScore: 0.972 } };
   const second = { name: 'Candidate B', by: 1986, parts: { testScore: 0.978 } };
