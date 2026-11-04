@@ -6,7 +6,7 @@
 <link rel="icon" href="data:,">
 <title>Ma'lumotnoma tuzatgich</title>
 <link rel="stylesheet" href="css/fonts.css?v=a7797cf389">
-<link rel="stylesheet" href="css/app.css?v=sci-quality-1">
+<link rel="stylesheet" href="css/app.css?v=sci-rank-1">
 </head>
 <body>
 <div class="app">
@@ -292,6 +292,38 @@
         <button type="button" role="tab" data-g="all" aria-selected="false">Hammasi <em id="sciGa"></em></button>
       </div>
       <div class="scik" id="sciK"></div>
+      <section class="sci-analytics" id="sciAnalytics" aria-labelledby="sciAnalyticsTitle">
+        <div class="sci-analytics-heading">
+          <div><h2 id="sciAnalyticsTitle">Kafedralar kesimida ilmiy salohiyat</h2>
+            <p>Professor-o‘qituvchilar orasida tan olingan ilmiy darajaga ega xodimlar ulushi bo‘yicha reyting.</p></div>
+        </div>
+        <div class="sci-rank-kpis" id="sciRankStats"></div>
+        <div class="sci-rank-grid">
+          <div class="card sci-rank-card">
+            <div class="sci-rank-card-head"><h3>Yetakchi kafedralar</h3><span>Ilmiy darajali xodimlar ulushi</span></div>
+            <div id="sciRankLeaders" class="sci-rank-leaders"></div>
+          </div>
+          <div class="card sci-rank-card">
+            <div class="sci-rank-card-head"><h3>Reyting metodikasi</h3></div>
+            <p class="sci-method-primary">Reyting = (DSc + PhD + fan nomzodi) / kafedradagi professor-o‘qituvchilar × 100%.</p>
+            <ul class="sci-method-list">
+              <li>Faqat tan olingan DSc, PhD va fan nomzodi darajalari hisobga olinadi.</li>
+              <li>Professor va dotsent unvonlari alohida ko‘rsatiladi; reyting foizini oshirmaydi.</li>
+              <li>Kamida 5 nafar xodimi bo‘lgan kafedra “yetarli tanlanma” sifatida belgilanadi.</li>
+              <li>Bo‘limi aniqlanmagan xodimlar umumiy ko‘rsatkichda hisoblanadi, lekin kafedra reytingiga kiritilmaydi.</li>
+              <li>Tashqi o‘rindoshlar hisobga olinmaydi. Har bir xodim bir marta sanaladi.</li>
+            </ul>
+          </div>
+        </div>
+        <div class="card sci-rank-table-card">
+          <div class="sci-rank-card-head"><div><h3>Kafedralar reytingi</h3><span id="sciRankCaption">Ma’lumotlar yuklanmoqda…</span></div>
+            <button type="button" class="btn2" id="sciRankExport">Reytingni Excel'ga yuklash</button></div>
+          <div class="twrap"><table class="rtable sci-rank-table"><thead><tr>
+            <th>O‘rin</th><th>Kafedra</th><th>Professor-o‘qituvchi</th><th>Ilmiy darajali</th><th>Ulushi</th><th>DSc</th><th>PhD</th><th>Fan nomzodi</th><th>Professor</th><th>Dotsent</th><th>Tekshiruv</th><th></th>
+          </tr></thead><tbody id="sciRankBody"></tbody></table></div>
+          <div class="sci-rank-foot" id="sciRankNote" aria-live="polite"></div>
+        </div>
+      </section>
       <div class="card">
         <div class="tbar sci-toolbar"><label class="search"><span hidden>Qidirish</span><input type="search" id="sciSearch" placeholder="F.I.Sh., lavozim, daraja, unvon, manba..." autocomplete="off" aria-label="Ro'yxatdan ko'p so'zli qidirish"></label>
           <label class="tsel">Bo'lim <select id="sciDept"><option value="">Hammasi</option></select></label>
@@ -467,7 +499,7 @@
 <script src="vendor/jszip.min.js"></script>
 <script src="js/core.js?v=c7cf009e49"></script>
 <script src="js/coi-engine.js?v=coi-shared-2"></script>
-<script src="js/science-engine.js?v=sci1"></script>
-<script src="js/app.js?v=sci-quality-1"></script>
+<script src="js/science-engine.js?v=sci-rank-1"></script>
+<script src="js/app.js?v=sci-rank-1"></script>
 </body>
 </html>
