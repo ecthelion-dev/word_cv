@@ -95,6 +95,22 @@ test('does not merge different or merely similar employee names', () => {
   assert.equal(CoiEngine.samePerson('Абдулла Киёмов', 'Бахром Ташматов', core), false);
 });
 
+test('searches across multiple fields without requiring the same word order', () => {
+  assert.equal(
+    CoiEngine.matchesSearch(['Abdulla Qiyomov', 'Texnologiya kafedrasi'], 'qiyomov abdulla', core),
+    true
+  );
+  assert.equal(
+    CoiEngine.matchesSearch(['Abdulla Qiyomov', 'Texnologiya kafedrasi'], 'texnologiya qiyomov', core),
+    true
+  );
+  assert.equal(
+    CoiEngine.matchesSearch(['Abdulla Qiyomov', 'Texnologiya kafedrasi'], 'bahrom', core),
+    false
+  );
+  assert.equal(CoiEngine.matchesSearch(['Abdulla Qiyomov'], '   ', core), true);
+});
+
 test('uses a matching birth year to break a near-equal name match', () => {
   const first = { name: 'Candidate A', by: 1980, parts: { testScore: 0.972 } };
   const second = { name: 'Candidate B', by: 1986, parts: { testScore: 0.978 } };
