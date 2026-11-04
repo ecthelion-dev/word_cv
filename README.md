@@ -9,7 +9,7 @@ O'zbekistondagi tashkilotlar va OTMlar kadrlar bo'limi uchun spravka-ob'ektivka 
 ## 🚀 Asosiy imkoniyatlar
 
 1. **Ko'p formatli hujjatlarni o'qish (Parsing):**
-   - `.docx`, `.doc` (eski Word formati), `.pdf` (matnli va skanerlangan OCR), hamda `.zip` arxivlarni qo'llab-quvvatlaydi.
+   - `.docx`, `.doc` (eski Word formati), `.pdf` (matnli yoki avvaldan OCR matn qatlamiga ega) hamda `.zip` arxivlarni qo'llab-quvvatlaydi. Faqat rasm ko'rinishida bo'lgan, matn qatlami yo'q skaner PDF uchun alohida OCR kerak.
    - Butun papkani yoki yuzlab fayllarni birdaniga sudrab tashlash (`drag & drop`).
    - Web Worker orqali fonda tezkor qayta ishlash.
 
@@ -119,3 +119,10 @@ Ilmiy dashboard yordamchi saralash va tekshirish vositasidir. «Boshqa» yoki ma
 - 5 nafardan kam xodimli kafedralar reytingda qoladi, ammo «kam sonli tanlanma» deb belgilanadi.
 - Bo‘limi aniqlanmagan xodimlar umumiy foizda hisobga olinadi, ammo kafedralar reytingiga kiritilmaydi.
 - Excel eksportiga «Kafedralar reytingi» varag‘i va hisoblash metodikasi qo‘shiladi.
+
+
+## PDF o‘qish va diagnostika
+
+- PDF.js worker `GlobalWorkerOptions.workerSrc` orqali `vendor/pdf.worker.min.js` manziliga ulanadi; manzil sayt domenining ildiziga emas, ilovaning joriy manziliga nisbatan hisoblanadi (GitHub Pages `/word_cv/` yo‘li ham qo‘llab-quvvatlanadi).
+- PDF va worker kutubxonalari bir xil `vendor/` to‘plamidan yuklanadi.
+- Matn qatlami bo‘lmagan sof skaner PDF hozircha avtomatik OCR qilinmaydi. Bunday fayl uchun matnli/OCR qatlami bor PDF yoki Word nusxasi kerak.
