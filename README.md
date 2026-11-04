@@ -121,8 +121,14 @@ Ilmiy dashboard yordamchi saralash va tekshirish vositasidir. «Boshqa» yoki ma
 - Excel eksportiga «Kafedralar reytingi» varag‘i va hisoblash metodikasi qo‘shiladi.
 
 
+## Skanerlangan PDF OCR
+
+- `js/scanned-pdf-ocr.js` — PDF.js sahifalarini canvas'ga chizib, Tesseract.js orqali matnni tanish va natijani mavjud ma’lumotnoma parseriga uzatish.
+- OCR faqat oddiy PDF matn qatlami yo‘q bo‘lganda ishga tushadi; matnli PDF'lar avvalgi tezkor yo‘ldan foydalanadi.
+- `tests/scanned-pdf-ocr.test.cjs` — ko‘p bet, til to‘plami, sahifa masshtabi, bo‘sh OCR va resurslarni tozalash sinovlari.
+
 ## PDF o‘qish va diagnostika
 
 - PDF.js worker `GlobalWorkerOptions.workerSrc` orqali `vendor/pdf.worker.min.js` manziliga ulanadi; manzil sayt domenining ildiziga emas, ilovaning joriy manziliga nisbatan hisoblanadi (GitHub Pages `/word_cv/` yo‘li ham qo‘llab-quvvatlanadi).
 - PDF va worker kutubxonalari bir xil `vendor/` to‘plamidan yuklanadi.
-- Matn qatlami bo‘lmagan sof skaner PDF hozircha avtomatik OCR qilinmaydi. Bunday fayl uchun matnli/OCR qatlami bor PDF yoki Word nusxasi kerak.
+- Matn qatlami bo‘lmagan sof skaner PDF aniqlansa, dastur avtomatik OCR zaxira yo‘lini ishga tushiradi. PDF sahifalari brauzer ichida PDF.js bilan rasmga chiziladi va Tesseract.js orqali o‘qiladi.
