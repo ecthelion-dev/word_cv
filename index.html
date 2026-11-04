@@ -6,7 +6,7 @@
 <link rel="icon" href="data:,">
 <title>Ma'lumotnoma tuzatgich</title>
 <link rel="stylesheet" href="css/fonts.css?v=a7797cf389">
-<link rel="stylesheet" href="css/app.css?v=coi-search-page-1">
+<link rel="stylesheet" href="css/app.css?v=sci-quality-1">
 </head>
 <body>
 <div class="app">
@@ -293,8 +293,10 @@
       </div>
       <div class="scik" id="sciK"></div>
       <div class="card">
-        <div class="tbar"><label class="search"><span hidden>Qidirish</span><input type="search" id="sciSearch" placeholder="F.I.Sh., lavozim yoki fan sohasi…" autocomplete="off" aria-label="Ro'yxatdan qidirish"></label>
-          <label class="tsel">Bo'lim <select id="sciDept"><option value="">Hammasi</option></select></label></div>
+        <div class="tbar sci-toolbar"><label class="search"><span hidden>Qidirish</span><input type="search" id="sciSearch" placeholder="F.I.Sh., lavozim, daraja, unvon, manba..." autocomplete="off" aria-label="Ro'yxatdan ko'p so'zli qidirish"></label>
+          <label class="tsel">Bo'lim <select id="sciDept"><option value="">Hammasi</option></select></label>
+          <label class="tsel">Tartiblash <select id="sciSort"><option value="rank">Daraja va unvon bo'yicha</option><option value="name">F.I.Sh. bo'yicha</option><option value="dept">Bo'lim bo'yicha</option><option value="degree">Ilmiy daraja bo'yicha</option><option value="title">Ilmiy unvon bo'yicha</option></select></label>
+          <label class="tsel">Sahifada <select id="sciPageSize"><option value="20">20 ta</option><option value="50">50 ta</option><option value="100">100 ta</option></select></label></div>
         <div class="evf scif" role="group" aria-label="Toifa bo'yicha" id="sciF"></div>
         <div class="twrap"><table class="rtable scit"><thead><tr><th>№</th><th>F.I.Sh.</th><th>Lavozimi</th><th>Ilmiy darajasi</th><th>Ilmiy unvoni</th><th>Manba</th></tr></thead><tbody id="sciBody"></tbody></table></div>
         <div class="tfoot"><span id="sciInfo"></span><div class="pager" id="sciPager" role="navigation" aria-label="Sahifalar"></div></div>
