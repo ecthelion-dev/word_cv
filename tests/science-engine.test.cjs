@@ -110,6 +110,27 @@ test('keeps employees without a department outside the department ranking', () =
   assert.equal(result.unassigned, 2);
   assert.equal(result.departmentCount, 1);
   assert.equal(result.departments[0].department, 'Informatika');
+  assert.equal(result.degreeHolders, 2);
+  assert.equal(result.degreeRate, 66.7);
+  assert.equal(result.unassignedDegreeHolders, 1);
+});
+
+test('groups Latin and Cyrillic department spellings after canonical transliteration', () => {
+  const bilingualCore = {
+    ...core,
+    cyrToLat(value) {
+      return String(value).replace(/Физика/gi, 'Fizika').replace(/кафедраси/gi, 'kafedrasi');
+    }
+  };
+  const result = ScienceEngine.departmentRanking([
+    { grp: 'ped', dept: 'Fizika kafedrasi', dk: 'dsc' },
+    { grp: 'ped', dept: 'Физика кафедраси', dk: 'phd' },
+    { grp: 'ped', dept: 'Fizika kafedrasi', dk: null }
+  ], bilingualCore);
+  assert.equal(result.departmentCount, 1);
+  assert.equal(result.departments[0].staff, 3);
+  assert.equal(result.departments[0].degreeHolders, 2);
+  assert.equal(result.departments[0].degreeRate, 66.7);
 });
 
 test('gives equal ranks to departments with exactly equal degree-holder ratios', () => {
