@@ -122,6 +122,14 @@ test('links an identical shared-relative name despite a two-year birth-date disc
   assert.equal(result.yearGap, 2);
 });
 
+test('does not merge exact-name relative records with implausibly distant birth years', () => {
+  const group = { parts: { sur: 'saidova', giv: 'qurbonoy' }, birth: 1979, links: [] };
+  const result = CoiEngine.findSharedRelative(
+    { sur: 'saidova', giv: 'qurbonoy' }, 1990, [group], { nameScore: () => 1 }
+  );
+  assert.equal(result.group, null);
+});
+
 test('still rejects weak fuzzy shared-relative matches with conflicting birth years', () => {
   const group = { parts: { sur: 'saidova', giv: 'qurbonoy' }, birth: 1979, links: [] };
   const result = CoiEngine.findSharedRelative(
