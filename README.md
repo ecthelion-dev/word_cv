@@ -58,12 +58,38 @@ O'zbekistondagi tashkilotlar va OTMlar kadrlar bo'limi uchun spravka-ob'ektivka 
 
 ---
 
-## 🧩 Arxitektura va testlar
+## 🧩 Arxitektura, Modullar (`src/`) va Testlar
 
-- `js/core.js` — DOC/DOCX/PDF parsing, standartlashtirish va hujjat generatorlari.
-- `js/coi-engine.js` — manfaatlar to‘qnashuvi modulining sof qoidalari: qarindoshlik turini aniqlash va xodimlar ro‘yxatidan nomzodlarni solishtirish.
-- `js/app.js` — foydalanuvchi interfeysi va ish jarayoni.
-- `tests/coi-engine.test.cjs` — qarindoshlik klassifikatsiyasi va ism/tug‘ilgan yil mosligi uchun avtomatik testlar.
+Loyiha kodi oson tahrirlash va rivojlantirish uchun mantiqiy modullarga ajratilgan hamda o'qilishi oson formatга keltirilgan:
+
+- `src/core/` (`js/core.js` yadrosi — `SpravkaCore`):
+  - `01-dictionary-clean.js` — Lug'atlar, qisqartmalar, tutuq belgilari va imlo tozalash
+  - `02-matching-fields.js` — Shablonlar (`SCRIPTS`), matnni normallashtirish va ism qismlarini ajratish
+  - `03-block-parser.js` — Hujjat bloklaridan shaxsiy maydonlar, mehnat faoliyati va qarindoshlarni ajratish
+  - `04-docx-builder.js` — Standart Word (`.docx`) OpenXML hujjatini generatsiya qilish
+  - `05-transliterate.js` — Kirill ↔ Lotin yozuv o'girgichi
+  - `06-docx-analyzer.js` — `.docx` faylni o'qish va ogohlantirishlarni shakllantirish
+  - `07-doc-binary.js` — Eski binary `.doc` (Word 97–2003) formatini o'qish
+  - `08-pdf-analyzer.js` — PDF fayllardan matn, jadval, 3×4 rasm va OCR holatini ajratish
+  - `09-pdf-builder-api.js` — `PDF-lib` orqali standart PDF generatsiya qilish va `SpravkaCore` eksporti
+- `src/app/` (`js/app.js` interfeysi va funksional modullar):
+  - `01-ui-review.js` — Asosiy UI, fayllarni yuklash, Worker Pool, Tekshiruv va ZIP/PDF/DOCX eksport
+  - `02-excel.js` — Excel (`.xlsx` / `.csv`) kadrlar bazasi bilan integratsiya va solishtirish
+  - `03-coi.js` — Manfaatlar to'qnashuvi (O'RQ-931 va MK 121-modda) tahlili
+  - `04-science.js` — Ilmiy salohiyat tahlili, kafedralar reytingi va ko'p varaqli `.xlsx` eksport
+  - `05-evidence.js` — Dalillar to'plami, 17-modda Deklaratsiya va 14-modda Xabarnoma
+  - `06-editor.js` — Ma'lumotnoma interaktiv muharriri
+  - `07-storage.js` — `IndexedDB` xotira, Zaxira nusxa (Backup/Restore) va 30 daqiqalik avto-tozalash
+  - `08-tools.js` — Takrorlarni aniqlash, Ommaviy tuzatish (`Bulk Edit`) va Bo'sh maydonlar jadvali
+  - `09-reports.js` — Yakuniy hisobot, Rahbarlar ma'lumoti (Word jadval) va Yo'qlama
+- Alohida mustaqil modullar: `js/coi-engine.js`, `js/science-engine.js`, `js/pdf-engine.js`, `js/file-error.js`, `js/scanned-pdf-ocr.js`, `js/parseworker.js`.
+- Avtomatik testlar: `tests/*.test.cjs`.
+
+`src/` ichidagi modullardan `js/core.js`, `js/app.js` va `js/parseworker.js` fayllarini qayta yig'ish:
+
+```bash
+npm run build
+```
 
 Testlarni ishga tushirish:
 
