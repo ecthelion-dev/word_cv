@@ -2640,10 +2640,16 @@
       {
         const t = String(o.fields.grad_year || "")
           .split(/\n/)
-          .map((t) => t.trim());
-        t.length > 1 &&
-          t.some((t) => t && i.test(t)) &&
-          (o.fields.grad_year = t.filter((t) => t && !i.test(t)).join(", "));
+          .map((t) =>
+            t
+              .replace(
+                /^(?:(?:тугалланмаган\s+)?(?:олий|oliy)(?:\s+маълумот(?:ли)?)?|ўрта\s+махсус|o[‘'’`]?rta\s+maxsus)[\s,.;:()-]+/i,
+                "",
+              )
+              .trim(),
+          )
+          .filter((t) => t && !i.test(t));
+        o.fields.grad_year = t.join("\n");
       }
       a.length &&
         !String(o.fields.grad_year || "").trim() &&

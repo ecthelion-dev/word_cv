@@ -10073,7 +10073,21 @@ function migrateItem(e) {
   const a = [],
     n = cloneP(t);
   ((t.name = SpravkaCore.stripNameNote(t.name, a)),
-    (t.relHeadingName = SpravkaCore.stripNameNote(t.relHeadingName, a)));
+    (t.relHeadingName = SpravkaCore.stripNameNote(t.relHeadingName, a)),
+    t.fields &&
+      t.fields.grad_year &&
+      (t.fields.grad_year = String(t.fields.grad_year)
+        .split(/\n/)
+        .map((e) =>
+          e
+            .replace(
+              /^(?:(?:тугалланмаган\s+)?(?:олий|oliy)(?:\s+маълумот(?:ли)?)?)[\s,.;:()-]+/iu,
+              "",
+            )
+            .trim(),
+        )
+        .filter(Boolean)
+        .join("\n")));
   const i = SpravkaCore.mergeWork(t.work).map((e) =>
     SpravkaCore.fixWorkLine(e, t.S.latin),
   );
@@ -13334,7 +13348,17 @@ async function leadDocx() {
     } else g++;
     const w = String(a.grad || "")
       .split(/\n|;|,\s*(?=\d{4})/)
-      .map((e) => toCyr(e.trim().replace(/[,.]$/, "")))
+      .map((e) =>
+        toCyr(
+          e
+            .trim()
+            .replace(
+              /^(?:(?:тугалланмаган\s+)?(?:олий|oliy)(?:\s+маълумот(?:ли)?)?)[\s,.;:()-]*/iu,
+              "",
+            )
+            .replace(/[,.]$/, ""),
+        ),
+      )
       .filter(Boolean);
     let $ = w
       .map((e, n) => i(t(e) + (n < w.length - 1 || !h(a.spec) ? "," : "")))

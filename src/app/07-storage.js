@@ -366,7 +366,21 @@ function migrateItem(e) {
   const a = [],
     n = cloneP(t);
   ((t.name = SpravkaCore.stripNameNote(t.name, a)),
-    (t.relHeadingName = SpravkaCore.stripNameNote(t.relHeadingName, a)));
+    (t.relHeadingName = SpravkaCore.stripNameNote(t.relHeadingName, a)),
+    t.fields &&
+      t.fields.grad_year &&
+      (t.fields.grad_year = String(t.fields.grad_year)
+        .split(/\n/)
+        .map((e) =>
+          e
+            .replace(
+              /^(?:(?:тугалланмаган\s+)?(?:олий|oliy)(?:\s+маълумот(?:ли)?)?)[\s,.;:()-]+/iu,
+              "",
+            )
+            .trim(),
+        )
+        .filter(Boolean)
+        .join("\n")));
   const i = SpravkaCore.mergeWork(t.work).map((e) =>
     SpravkaCore.fixWorkLine(e, t.S.latin),
   );

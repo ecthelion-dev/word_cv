@@ -1284,7 +1284,17 @@ async function leadDocx() {
     } else g++;
     const w = String(a.grad || "")
       .split(/\n|;|,\s*(?=\d{4})/)
-      .map((e) => toCyr(e.trim().replace(/[,.]$/, "")))
+      .map((e) =>
+        toCyr(
+          e
+            .trim()
+            .replace(
+              /^(?:(?:тугалланмаган\s+)?(?:олий|oliy)(?:\s+маълумот(?:ли)?)?)[\s,.;:()-]*/iu,
+              "",
+            )
+            .replace(/[,.]$/, ""),
+        ),
+      )
       .filter(Boolean);
     let $ = w
       .map((e, n) => i(t(e) + (n < w.length - 1 || !h(a.spec) ? "," : "")))
