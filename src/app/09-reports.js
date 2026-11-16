@@ -1026,6 +1026,22 @@ function leadInit() {
       a && t.push({ it: e, rk: a, idx: items.indexOf(e), on: !0 });
     }
   "rank" === lead.sortMode && t.sort((e, t) => e.rk - t.rk || e.idx - t.idx);
+  {
+    const e = (e) =>
+        toCyr(
+          e.row && e.src
+            ? (e.row[e.src.map.dept] || "") +
+                " " +
+                (e.row[e.src.map.position] || "")
+            : (e.it && e.it.P && e.it.P.position) || "",
+        ),
+      a = t.findIndex((t) => /техник\s+фойдаланиш.*хўжалик\s+бўлим/i.test(e(t))),
+      n = t.findIndex((t) => /фуқаро.*меҳнат\s+муҳофаза.*бўлим/i.test(e(t)));
+    if (a >= 0 && n >= 0 && a > n) {
+      const [e] = t.splice(a, 1);
+      t.splice(n, 0, e);
+    }
+  }
   const a = new Map((lead.list || []).map((e) => [e.row || e.it, e.on]));
   for (const e of t) a.has(e.row || e.it) && (e.on = a.get(e.row || e.it));
   ((lead.list = t),
