@@ -12600,6 +12600,14 @@ function cleanOtm(e) {
       .replace(eduWbRe("ТДПУ"), "Тошкент давлат педагогика университети")
       .replace(eduWbRe("ТерДУ"), "Термиз давлат университети")
       .replace(
+        /Ўзбекистон\s+миллий\s+университети/giu,
+        "Ўзбекистон Миллий университети",
+      )
+      .replace(
+        /Тошкент\s+давлат\s+кимё[\s-]+технология\s+институти/giu,
+        "Тошкент давлат кимё-технология институти",
+      )
+      .replace(
         /Тошкент\s+ахборот\s+технологиялари(?!\s+университети)/giu,
         "Тошкент ахборот технологиялари университети",
       )
@@ -12676,9 +12684,15 @@ function parseEduEntry(e) {
     { year: a, otm: r, level: i, mode: o, student: l, joint: s }
   );
 }
+const toCyrLines = (e) =>
+  String(e || "")
+    .split(/\r?\n+/)
+    .map((e) => toCyr(e).trim())
+    .filter(Boolean)
+    .join("\n");
 function splitDocGrad(e) {
   if (!e) return [];
-  let t = toCyr(String(e)).trim();
+  let t = toCyrLines(e);
   t = t.replace(
     /([)\wа-яёўқғҳ.,;])\s+(?=(?:[12]\s*[.)]\s*)?(?:\d{4}\s*[-–—]\s*)?(?:19\d\d|20\d\d)\s*(?:-?\s*(?:йил|й\.|yil|y\.)|\s+[А-ЯЁЎҚҒҲA-Z]))/giu,
     "$1\n",
@@ -12712,7 +12726,7 @@ function splitDocGrad(e) {
 }
 function splitXlGrad(e, t) {
   const a = (String(e || "").match(/\b(?:19\d\d|20\d\d)\b/g) || []).map(Number);
-  let n = toCyr(String(t || "")).trim();
+  let n = toCyrLines(t);
   if (!a.length && !n) return [];
   n = n.replace(
     /(\((?:бакалавр|бакалавриат)[^)]*\))\s+(?=[А-ЯЁЎҚҒҲA-Z])/giu,
@@ -12899,7 +12913,8 @@ function leadEdu(e, t, a, n, i, o) {
       !p[0].level &&
       /магистратура/iu.test(String(o || "")) &&
       (p[0].level = "mag");
-  return d
+  const m = d.filter((e) => "asp" !== e.level && "sec" !== e.level);
+  return (m.length ? m : d)
     .map((e) => {
       if (e.student && !e.year) return `${e.otm} (талаба)`;
       const t = [];
@@ -12924,6 +12939,8 @@ function cleanSpec(e) {
     .replace(/\b[12]\s*\.\s*/g, ", ")
     .replace(/^,\s*/, "")
     .replace(/\s*\((?:магистратура|бакалавр|кундузги|сиртқи)\)/giu, "")
+    .replace(/["“”«»]/g, "")
+    .replace(/\s*-\s*эколог/giu, "-эколог")
     .replace(eduWbRe("ўфитиш"), "ўқитиш")
     .replace(eduWbRe("адабиёцҳунос"), "адабиётшунос")
     .replace(eduWbRe("менжменти"), "менежменти")
@@ -12933,16 +12950,29 @@ function cleanSpec(e) {
     .replace(eduWbRe("инжинириги"), "инжиниринги")
     .replace(eduWbRe("кампютер|компютер"), "компьютер")
     .replace(eduWbRe("курилиши"), "қурилиши")
+    .replace(eduWbRe("тармоклар"), "тармоқлар")
+    .replace(eduWbRe("композисион"), "композицион")
+    .replace(/бухгалтерия$/iu, "бухгалтери")
     .replace(eduWbRe("Ўқитувчиси"), "ўқитувчиси")
+    .replace(/:\s*([А-ЯЁЎҚҒҲ])(?=[а-яёўқғҳ])/gu, (e, t) => ": " + t.toLowerCase())
     .replace(/\s*,\s*/g, ", ")
     .replace(/[.;,\s]+$/g, "")
     .trim();
-  const t = e.split(/,\s*/).filter(Boolean),
+  const t = e
+      .split(/,\s*/)
+      .filter(Boolean)
+      .map((e) =>
+        /^[A-ZА-ЯЁЎҚҒҲ]{2,}$/u.test(e) ? e : e[0].toLowerCase() + e.slice(1),
+      ),
     a = [];
-  for (const e of t)
-    a.some((t) => SpravkaCore.norm(t) === SpravkaCore.norm(e)) || a.push(e);
-  const n = a.join(", ");
-  return n ? n[0].toLowerCase() + n.slice(1) : "";
+  for (const e of t) {
+    const t = SpravkaCore.norm(e);
+    a.some((a) => {
+      const n = SpravkaCore.norm(a);
+      return n === t || (a.includes(":") && n.startsWith(t + " "));
+    }) || a.push(e);
+  }
+  return a.join(", ");
 }
 function leadSpec(e, t) {
   const a = cleanSpec(e),
@@ -13082,11 +13112,12 @@ function cleanLeadBp(e) {
     t ? t[0].toUpperCase() + t.slice(1) : ""
   );
 }
+const LEAD_EMPTY_RE = /^(?:йўқ|yo['‘’`]?q|[-—?]+)$/iu;
 function cleanLeadDeg(e) {
   let t = toCyr(String(e || ""))
     .replace(/\s+/g, " ")
     .trim();
-  if (!t) return "";
+  if (!t || LEAD_EMPTY_RE.test(t)) return "";
   return (
     (t = t
       .replace(eduWbRe("буйича"), "бўйича")
@@ -13102,7 +13133,7 @@ function cleanLeadTitle(e) {
   let t = toCyr(String(e || ""))
     .replace(/\s+/g, " ")
     .trim();
-  if (!t) return "";
+  if (!t || LEAD_EMPTY_RE.test(t)) return "";
   return (
     (t = t
       .replace(eduWbRe("Дотцент|дотцент"), "Доцент")
