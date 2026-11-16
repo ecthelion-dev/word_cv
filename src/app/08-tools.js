@@ -181,7 +181,7 @@ function xlAutoApply(e, t) {
           ? "field" === t.kind ||
             ("name" === t.kind && (t.spell || !e.xlManualName)) ||
             ("position" === t.kind && t.minor)
-          : t.auto || ("name" === t.kind && t.spell && !e.xlManualName)),
+          : t.auto || (t.spell && ("name" !== t.kind || !e.xlManualName))),
     );
   if (!i.length) return 0;
   if (t) for (const [a, n] of undoSnap([e])) t.set(a, n);

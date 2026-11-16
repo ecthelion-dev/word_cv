@@ -1189,6 +1189,36 @@ function posMinor(e, t) {
     );
   return n.every((e) => o(i, e)) && i.every((e) => o(n, e));
 }
+const spellScore = (e) =>
+  (SpravkaCore.latToCyr(String(e || "")).match(/[ЎўҒғҚқҲҳЁёЭэЪъ]/g) || [])
+    .length;
+function pickBestWords(e, t, a) {
+  const n = cleanVal(e, a),
+    i = cleanVal(t, a);
+  if (!n || !i) return i || n;
+  const o = n.split(/\s+/).filter(Boolean),
+    l = i.split(/\s+/).filter(Boolean);
+  return l
+    .map((e, t) => {
+      const a = o[t];
+      if (!a || SpravkaCore.norm(a) !== SpravkaCore.norm(e)) return e;
+      return spellScore(a) > spellScore(e) ? a : e;
+    })
+    .join(" ");
+}
+function pickBestSpelling(e, t, a) {
+  const n = cleanVal(e, a),
+    i = cleanVal(t, a);
+  if (!n || !i) return i || n;
+  if (SpravkaCore.norm(n) !== SpravkaCore.norm(i)) return i;
+  const o = n.split(/\s+/).filter(Boolean),
+    l = i.split(/\s+/).filter(Boolean);
+  if (o.length === l.length)
+    return l
+      .map((e, t) => (spellScore(o[t]) > spellScore(e) ? o[t] : e))
+      .join(" ");
+  return spellScore(n) > spellScore(i) ? n : i;
+}
 function diffRow(e, t) {
   const a = e.S.labels,
     n = e.S.latin,
@@ -1250,20 +1280,39 @@ function diffRow(e, t) {
             !/\s/.test(l)) ||
             /^(?:йўқ|yo‘q)$/i.test(l)) &&
             (l = l[0].toLowerCase() + l.slice(1)));
-      if (!same(l, e.fields[t])) {
-        const n =
+      if (same(l, e.fields[t])) {
+        const s = pickBestSpelling(e.fields[t] || "", l, n);
+        s &&
+          s !== (e.fields[t] || "") &&
+          spellScore(s) > spellScore(e.fields[t] || "") &&
+          i.push({
+            kind: "field",
+            key: t,
+            label: a[t],
+            old: e.fields[t] || "",
+            val: s,
+            on: !0,
+            auto: !0,
+            spell: !0,
+          });
+      } else {
+        const o =
           FULL_KEYS.has(t) && e.fields[t] && !isEmptyV(e.fields[t])
             ? fuller(e.fields[t], l)
             : 0;
-        if (1 === n) continue;
+        if (1 === o) continue;
+        const r =
+          e.fields[t] && !isEmptyV(e.fields[t])
+            ? pickBestWords(e.fields[t], l, n)
+            : l;
         i.push({
           kind: "field",
           key: t,
           label: a[t],
           old: e.fields[t] || "",
-          val: l,
+          val: r,
           on: !0,
-          auto: -1 === n,
+          auto: -1 === o,
         });
       }
     }
@@ -1404,26 +1453,47 @@ function diffRow(e, t) {
     });
   }
   if (S) {
-    const t = h || e.since;
-    i.push({
-      kind: "position",
-      label: n ? "Lavozim (yangi tayinlov)" : "Лавозим (янги тайинлов)",
-      old: [e.since, e.position].filter(Boolean).join(" "),
-      val: [t, l].filter(Boolean).join(" "),
-      since: t,
-      pos: l,
-      year: u && u.y ? u.y : null,
-      noDate: !(u && u.y),
-      sameDate: !!(u && u.y && e.since && sameSince(u, e.since)),
-      on: !0,
-      minor: !!(
+    const t = h || e.since,
+      a = e.position ? pickBestWords(e.position, l, n) : l,
+      o = !!(
         u &&
         u.y &&
         e.since &&
         sameSince(u, e.since) &&
-        posMinor(e.position, l)
-      ),
+        posMinor(e.position, a)
+      );
+    i.push({
+      kind: "position",
+      label: n ? "Lavozim (yangi tayinlov)" : "Лавозим (янги тайинлов)",
+      old: [e.since, e.position].filter(Boolean).join(" "),
+      val: [t, a].filter(Boolean).join(" "),
+      since: t,
+      pos: a,
+      year: u && u.y ? u.y : null,
+      noDate: !(u && u.y),
+      sameDate: !!(u && u.y && e.since && sameSince(u, e.since)),
+      on: !0,
+      minor: o,
+      spell: o,
     });
+  } else if (l && e.position) {
+    const t = pickBestSpelling(e.position, l, n);
+    t &&
+      t !== e.position &&
+      spellScore(t) > spellScore(e.position) &&
+      i.push({
+        kind: "position",
+        label: n ? "Lavozim (imlo)" : "Лавозим (имло)",
+        old: e.position,
+        val: t,
+        since: e.since,
+        pos: t,
+        year: u && u.y ? u.y : null,
+        sameDate: !0,
+        on: !0,
+        auto: !0,
+        spell: !0,
+      });
   }
   return i;
 }
