@@ -534,7 +534,8 @@ async function backupImport(e) {
     )
   )
     return;
-  ((items.length = 0),
+  (revokePhotoUrls(),
+    (items.length = 0),
     (queue.length = 0),
     (draft = null),
     (unsaved = !1),

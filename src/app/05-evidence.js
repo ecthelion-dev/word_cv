@@ -951,6 +951,11 @@ function excelBlock(e) {
     t
   );
 }
+function rowsToCsv(e) {
+  if ("string" == typeof e) return "\ufeff" + e.replace(/^\ufeff/, "");
+  const t = (e) => '"' + String(null == e ? "" : e).replace(/"/g, '""') + '"';
+  return "\ufeff" + (e || []).map((e) => e.map(t).join(";")).join("\r\n");
+}
 function reportCsv() {
   const t = [
     [

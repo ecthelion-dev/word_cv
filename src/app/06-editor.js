@@ -644,7 +644,7 @@ function buildEditor(e, t) {
     if (((s.textContent = ""), e.photo && e.photo.bytes)) {
       const t = el("img");
       ((t.alt = "Rasm"),
-        (t.src = URL.createObjectURL(new Blob([e.photo.bytes]))),
+        (t.src = photoUrl(e.photo)),
         s.append(t));
     } else s.append("Rasm yo'q");
     ((c.textContent = e.photo ? "Rasmni almashtirish" : "Rasm qo'shish (3×4)"),

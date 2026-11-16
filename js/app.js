@@ -548,9 +548,38 @@ function syncKpi() {
       (document.querySelector(".queue").classList.remove("qopen"),
       $("qTog").setAttribute("aria-expanded", "false"));
   }));
-let clearArmed = null;
+let clearArmed = null,
+  photoUrls = new WeakMap();
+const activePhotoUrls = new Set();
+function photoUrl(e) {
+  if (!e || !e.bytes) return "";
+  let t = photoUrls.get(e);
+  if (t) return t;
+  try {
+    return (
+      (t = URL.createObjectURL(
+        new Blob([e.bytes], {
+          type: "image/" + ("jpg" === e.ext ? "jpeg" : e.ext || "jpeg"),
+        }),
+      )),
+      photoUrls.set(e, t),
+      activePhotoUrls.add(t),
+      t
+    );
+  } catch (e) {
+    return "";
+  }
+}
+function revokePhotoUrls() {
+  for (const e of activePhotoUrls)
+    try {
+      URL.revokeObjectURL(e);
+    } catch (e) {}
+  (activePhotoUrls.clear(), (photoUrls = new WeakMap()));
+}
 function wipeList() {
-  ((items.length = 0),
+  (revokePhotoUrls(),
+    (items.length = 0),
     (queue.length = 0),
     (draft = null),
     (unsaved = !1),
@@ -2245,26 +2274,13 @@ function renderCard(e) {
     m = el("td", "c-ph");
   if (n) {
     if (n.photo && n.photo.bytes) {
-      if (e._thumbFor !== n.photo)
-        try {
-          (e._thumb && URL.revokeObjectURL(e._thumb),
-            (e._thumb = URL.createObjectURL(
-              new Blob([n.photo.bytes], {
-                type:
-                  "image/" +
-                  ("jpg" === n.photo.ext ? "jpeg" : n.photo.ext || "jpeg"),
-              }),
-            )),
-            (e._thumbFor = n.photo));
-        } catch (t) {
-          e._thumb = null;
-        }
-      if (e._thumb) {
-        const t = el("img", "thumb");
-        ((t.src = e._thumb),
-          (t.alt = "Rasm"),
-          (t.loading = "lazy"),
-          m.append(t));
+      const t = photoUrl(n.photo);
+      if (t) {
+        const e = el("img", "thumb");
+        ((e.src = t),
+          (e.alt = "Rasm"),
+          (e.loading = "lazy"),
+          m.append(e));
       } else m.append(el("span", "tg ok", "rasm bor"));
     } else m.append(el("span", "tg no", "rasm yo'q"));
     const t =
@@ -2660,7 +2676,7 @@ function renderFixed(e) {
   if (e.photo && e.photo.bytes) {
     const a = el("img", "photo");
     ((a.alt = "Rasm"),
-      (a.src = URL.createObjectURL(new Blob([e.photo.bytes]))),
+      (a.src = photoUrl(e.photo)),
       t.append(a));
   } else {
     const e = el("button", "nophoto", "Rasm qo'shish");
@@ -3054,7 +3070,14 @@ function renderFillCard(e) {
       (($("rTodoC").hidden = !1),
       n.append(el("li", "okline", "Hammasi to'ldirilgan ✓"))),
     ($("rFillSave").onclick = () => {
-      const a = [];
+      if (
+        r.fields.birth_date &&
+        String(r.fields.birth_date).trim() &&
+        !/^\d{2}\.\d{2}\.\d{4}$/.test(String(r.fields.birth_date).trim())
+      )
+        return void toast("Tug'ilgan sana kk.oo.yyyy ko'rinishida bo'lsin");
+      const a = [],
+        i = cloneP(t);
       (r.name.trim() &&
         ((t.name = niceName(toScript(r.name.trim(), o))), a.push("name")),
         r.position.trim() &&
@@ -3062,8 +3085,6 @@ function renderFillCard(e) {
       for (const [e, n] of Object.entries(r.fields)) {
         const i = String(n || "").trim();
         if (i) {
-          if ("birth_date" === e && !/^\d{2}\.\d{2}\.\d{4}$/.test(i))
-            return void toast("Tug'ilgan sana kk.oo.yyyy ko'rinishida bo'lsin");
           ((t.fields[e] = [
             "party",
             "education",
@@ -3083,6 +3104,8 @@ function renderFillCard(e) {
       }
       const n = e.manualKeys || (e.manualKeys = new Set());
       (a.forEach((e) => n.add(e)),
+        histDiff(e, i, t, "Qo'lda tahrir"),
+        (unsaved = !0),
         (e.reasons = reviewReasons(t)),
         e.approved || (e.state = e.reasons.length ? "warn" : "ok"),
         renderCard(e),
@@ -3115,7 +3138,10 @@ $("rPhotoIn").addEventListener("change", async () => {
   const t = photoTarget;
   if (((photoTarget = null), e && t && t.P))
     try {
+      const a = !!t.P.photo;
       ((t.P.photo = await photoFromFile(e)),
+        hist(t, "Qo'lda tahrir", "Rasm", a ? "bor" : "yo'q", "qo'shildi"),
+        (unsaved = !0),
         (t.reasons = reviewReasons(t.P)),
         t.approved || (t.state = t.reasons.length ? "warn" : "ok"),
         renderCard(t),
@@ -3284,7 +3310,7 @@ function zipAll() {
             (t.textContent = `Tayyorlanmoqda: ${p} / ${d.length}`),
             await new Promise((e) => setTimeout(e, 0)));
         }
-        (r && a.file("hisobot.csv", "\ufeff" + reportCsv().replace(/^﻿/, "")),
+        (r && a.file("hisobot.csv", rowsToCsv(reportCsv())),
           (t.textContent = "ZIP yig'ilmoqda…"));
         const m = await a.generateAsync({
           type: "uint8array",
@@ -8746,6 +8772,11 @@ function excelBlock(e) {
     t
   );
 }
+function rowsToCsv(e) {
+  if ("string" == typeof e) return "\ufeff" + e.replace(/^\ufeff/, "");
+  const t = (e) => '"' + String(null == e ? "" : e).replace(/"/g, '""') + '"';
+  return "\ufeff" + (e || []).map((e) => e.map(t).join(";")).join("\r\n");
+}
 function reportCsv() {
   const t = [
     [
@@ -9446,7 +9477,7 @@ function buildEditor(e, t) {
     if (((s.textContent = ""), e.photo && e.photo.bytes)) {
       const t = el("img");
       ((t.alt = "Rasm"),
-        (t.src = URL.createObjectURL(new Blob([e.photo.bytes]))),
+        (t.src = photoUrl(e.photo)),
         s.append(t));
     } else s.append("Rasm yo'q");
     ((c.textContent = e.photo ? "Rasmni almashtirish" : "Rasm qo'shish (3×4)"),
@@ -10193,7 +10224,8 @@ async function backupImport(e) {
     )
   )
     return;
-  ((items.length = 0),
+  (revokePhotoUrls(),
+    (items.length = 0),
     (queue.length = 0),
     (draft = null),
     (unsaved = !1),
@@ -11817,21 +11849,27 @@ function fillControl(e, t) {
             i.setCustomValidity("Sana kk.oo.yyyy ko'rinishida bo'lsin"),
             void i.reportValidity()
           );
+        const l = getK(a, t) || "";
         if (
           (i.setCustomValidity(""),
           "INPUT" === i.tagName && "birth_date" !== t && (o = toScript(o, n)),
           "name" === t && (o = niceName(o)),
           setK(a, t, o),
+          l !== o && hist(e, "Bo'sh maydonlar", FLD_LBL(a, t), l, o),
           "grad_year" === t && isEmptyV(a.fields.education))
         ) {
-          const e = SpravkaCore.eduFromGrad(o, n);
-          if (e) {
-            a.fields.education = e;
+          const s = SpravkaCore.eduFromGrad(o, n);
+          if (s) {
+            const r = a.fields.education || "";
+            ((a.fields.education = s),
+              r !== s &&
+                hist(e, "Bo'sh maydonlar", FLD_LBL(a, "education"), r, s));
             const t = i.closest("tr").querySelector('[data-k="education"]');
-            t && ((t.value = e), t.classList.add("done"));
+            t && ((t.value = s), t.classList.add("done"));
           }
         }
         ((e.manualKeys || (e.manualKeys = new Set())).add(t),
+          (unsaved = !0),
           (e.reasons = reviewReasons(a)),
           e.approved || (e.state = e.reasons.length ? "warn" : "ok"),
           i.classList.add("done"),

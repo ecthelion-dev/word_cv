@@ -1423,21 +1423,27 @@ function fillControl(e, t) {
             i.setCustomValidity("Sana kk.oo.yyyy ko'rinishida bo'lsin"),
             void i.reportValidity()
           );
+        const l = getK(a, t) || "";
         if (
           (i.setCustomValidity(""),
           "INPUT" === i.tagName && "birth_date" !== t && (o = toScript(o, n)),
           "name" === t && (o = niceName(o)),
           setK(a, t, o),
+          l !== o && hist(e, "Bo'sh maydonlar", FLD_LBL(a, t), l, o),
           "grad_year" === t && isEmptyV(a.fields.education))
         ) {
-          const e = SpravkaCore.eduFromGrad(o, n);
-          if (e) {
-            a.fields.education = e;
+          const s = SpravkaCore.eduFromGrad(o, n);
+          if (s) {
+            const r = a.fields.education || "";
+            ((a.fields.education = s),
+              r !== s &&
+                hist(e, "Bo'sh maydonlar", FLD_LBL(a, "education"), r, s));
             const t = i.closest("tr").querySelector('[data-k="education"]');
-            t && ((t.value = e), t.classList.add("done"));
+            t && ((t.value = s), t.classList.add("done"));
           }
         }
         ((e.manualKeys || (e.manualKeys = new Set())).add(t),
+          (unsaved = !0),
           (e.reasons = reviewReasons(a)),
           e.approved || (e.state = e.reasons.length ? "warn" : "ok"),
           i.classList.add("done"),
