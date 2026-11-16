@@ -399,26 +399,60 @@ const RANK_LBL = {
   7: "Kafedra mudiri",
   9: "Boshqa",
 };
+function cleanDeptPos(e) {
+  return toCyr(String(e || ""))
+    .replace(/\s+/g, " ")
+    .replace(/Front\s+Offi(?:cc|ss)/gi, "Front Office")
+    .replace(/Back\s+Offi(?:cc|ss)/gi, "Back Office")
+    .replace(eduWbRe("инноватсиялар|иннотвасиялар"), "инновациялар")
+    .replace(eduWbRe("Илмий-инновасион"), "Илмий-инновацион")
+    .replace(eduWbRe("инновасион"), "инновацион")
+    .replace(eduWbRe("Коррупсияга"), "Коррупцияга")
+    .replace(eduWbRe("коррупсияга"), "коррупцияга")
+    .replace(eduWbRe("жорий\\s+етиш"), "жорий этиш")
+    .replace(
+      /рақамли\s+таълим\s+технологиялар\s+маркази/giu,
+      "Рақамли таълим технологиялари маркази",
+    )
+    .trim();
+}
 function leadPosText(e, t, a) {
-  const n = toCyr(e).replace(/\s+/g, " ").trim(),
+  const n = cleanDeptPos(e),
     i = CAT_RE.test(n) || LEAD_CAT_RE.test(n) ? "" : n,
-    o = toCyr(t).replace(/\s+/g, " ").trim();
+    o = cleanDeptPos(t),
+    r = o
+      .replace(
+        /\s+(?:бошлиғи|бошлиги|бошлиқ|бошлик|раҳбари|рахбари|декани|декан|мудири|директори|бошқарувчиси)(?:\s+в\.?\s*б\.?)?\s*$/i,
+        "",
+      )
+      .trim();
   let l;
-  l =
-    a >= 1 && a <= 3
-      ? o || i
-      : 4 === a || 5 === a
-        ? i && !/^(?:ректорат|раҳбарият|рахбарият)$/i.test(i)
-          ? i
-          : o.replace(
-              /\s+(?:бошлиғи|бошлиги|бошлиқ|бошлик|раҳбари|рахбари|декани|декан|мудири|директори|бошқарувчиси)\s*$/i,
-              "",
-            )
-        : 7 === a && i && /^кафедра(?:си)?\s+мудири?$/i.test(o)
-          ? `${i} мудири`
-          : i && o && !SpravkaCore.norm(o).includes(SpravkaCore.norm(i))
-            ? `${i} ${o[0].toLowerCase() + o.slice(1)}`
-            : o || i;
+  if (a >= 1 && a <= 3) l = o || i;
+  else if (4 === a || 5 === a)
+    if (i && !/^(?:ректорат|раҳбарият|рахбарият)$/i.test(i)) {
+      const e =
+        4 === a &&
+        r &&
+        !/^(?:бўлим(?:и)?|марказ(?:и)?|бошқарма(?:си)?|офис(?:и)?|сектор(?:и)?|хизмат(?:и)?|бош\s+бухгалтер)$/i.test(
+          r,
+        ) &&
+        !SpravkaCore.norm(i).includes(SpravkaCore.norm(r)) &&
+        !SpravkaCore.norm(r).includes(SpravkaCore.norm(i));
+      l = e ? `${i} ${r}` : i;
+    } else l = r;
+  else if (
+    7 === a &&
+    i &&
+    /^кафедра(?:си)?\s+мудири?(?:\s+в\.?\s*б\.?)?$/i.test(o)
+  ) {
+    const e = /в\.?\s*б\.?$/i.test(o) ? " в.б." : "",
+      t = /кафедра/i.test(i) ? i : `${i} кафедраси`;
+    l = `${t} мудири${e}`;
+  } else
+    l =
+      i && o && !SpravkaCore.norm(o).includes(SpravkaCore.norm(i))
+        ? `${i} ${o[0].toLowerCase() + o.slice(1)}`
+        : o || i;
   const s = orgOf(l);
   return (
     s &&
@@ -937,6 +971,74 @@ function findDoc(e) {
   }
   return a ? a[1] : null;
 }
+function cleanLeadName(e) {
+  let t = toCyr(String(e || ""))
+    .replace(/\s*\([^)]*\)\s*/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (!t) return "";
+  if (/^вакант$/iu.test(t)) return "Вакант";
+  return (
+    (t = t
+      .replace(eduWbRe("Елдор"), "Элдор")
+      .replace(eduWbRe("Пардайев"), "Пардаев")),
+    niceName(cleanPersonName(t) || t)
+  );
+}
+function cleanLeadBp(e) {
+  let t = toCyr(String(e || ""))
+    .replace(/\s+/g, " ")
+    .trim();
+  if (!t) return "";
+  return (
+    (t = t
+      .replace(eduWbRe("Қумқурғон"), "Қумқўрғон")
+      .replace(eduWbRe("Жарқурғон"), "Жарқўрғон")
+      .replace(eduWbRe("Шерабод"), "Шеробод")
+      .replace(eduWbRe("Шурчи"), "Шўрчи")
+      .replace(eduWbRe("тумаги"), "тумани")
+      .replace(eduWbRe("Сурхандарё|Сурҳондарё|Cурхондарё"), "Сурхондарё")
+      .replace(
+        /(Тошкент|Термиз)\s+шаҳар(?![\p{L}])/giu,
+        (e, t) => `${t} шаҳри`,
+      )
+      .replace(/(вилояти|Республикаси)\s+(?=[А-ЯЁЎҚҒҲ])/gu, "$1, ")
+      .replace(/\s*,\s*/g, ", ")
+      .replace(/[,.\s]+$/g, "")
+      .trim()),
+    t ? t[0].toUpperCase() + t.slice(1) : ""
+  );
+}
+function cleanLeadDeg(e) {
+  let t = toCyr(String(e || ""))
+    .replace(/\s+/g, " ")
+    .trim();
+  if (!t) return "";
+  return (
+    (t = t
+      .replace(eduWbRe("буйича"), "бўйича")
+      .replace(/фанлар\s+бўйича/giu, "фанлари бўйича")
+      .replace(/Фалсафа\s+доктори/gu, "фалсафа доктори")
+      .replace(eduWbRe("Иқтисод(?=\\s+фанлари)"), "Иқтисодиёт")
+      .replace(/[.;,\s]+$/g, "")
+      .trim()),
+    t ? t[0].toUpperCase() + t.slice(1) : ""
+  );
+}
+function cleanLeadTitle(e) {
+  let t = toCyr(String(e || ""))
+    .replace(/\s+/g, " ")
+    .trim();
+  if (!t) return "";
+  return (
+    (t = t
+      .replace(eduWbRe("Дотцент|дотцент"), "Доцент")
+      .replace(/(?<=\s)в\.?\s*б\.?$/iu, "в.б.")
+      .replace(/[;,\s]+$/g, "")
+      .trim()),
+    t ? t[0].toUpperCase() + t.slice(1) : ""
+  );
+}
 function leadRec(e) {
   const t = e.it,
     a = t && t.P,
@@ -945,15 +1047,15 @@ function leadRec(e) {
     const e = leadRank(a.position),
       t = parseDate(a.since || "");
     return {
-      name: a.name,
+      name: cleanLeadName(a.name),
       pos: leadPosText("", a.position, e),
       since: fmtD(t),
       bd: n.birth_date,
-      bp: n.birth_place,
+      bp: cleanLeadBp(n.birth_place),
       grad: leadEdu(n.grad_year, a.work, "", "", "", n.specialty),
       spec: leadSpec(n.specialty, ""),
-      deg: n.degree,
-      title: n.title,
+      deg: cleanLeadDeg(n.degree),
+      title: cleanLeadTitle(n.title),
       photo: a.photo,
       phone: "",
     };
@@ -985,18 +1087,18 @@ function leadRec(e) {
       s(n.specialty) ? n.specialty : oRaw("specialty"),
     );
   return {
-    name: niceName(l) || (a && a.name) || "",
+    name: cleanLeadName(l) || (a && cleanLeadName(a.name)) || "",
     pos: leadPosText(o("dept"), o("position") || (a ? a.position : ""), e.rk),
     since: fmtD(d),
     bd: c ? fmtD(c) : n.birth_date,
-    bp: o("birth_place") || n.birth_place,
+    bp: cleanLeadBp(o("birth_place") || n.birth_place),
     grad: p,
     spec: leadSpec(
       s(n.specialty) ? n.specialty : "",
       s(oRaw("specialty")) ? oRaw("specialty") : "",
     ),
-    deg: s(o("degree")) ? o("degree") : n.degree,
-    title: s(o("title")) ? o("title") : n.title,
+    deg: cleanLeadDeg(s(o("degree")) ? o("degree") : n.degree),
+    title: cleanLeadTitle(s(o("title")) ? o("title") : n.title),
     photo: a ? a.photo : null,
     phone: phoneOf(i.headers, e.row),
   };
