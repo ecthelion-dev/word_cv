@@ -36,6 +36,7 @@ function applyPrimary(e, t, a) {
         "field" !== e.kind ||
         o.has(e.key) ||
         (s.has(e.key) &&
+          !e.auto &&
           ((t = n.fields[e.key]),
           String(t || "").trim() &&
             !/^(?:йўқ|yo‘q|\?+)$/i.test(String(t).trim())))
@@ -208,7 +209,7 @@ function setDefaults(e) {
         continue;
       }
       const i = isEmptyV("position" === n.kind ? e.P.position : n.old);
-      n.on = !!i || (t && !a.has(n.key) && !KEEP_DOC.has(n.key));
+      n.on = !!i || (t && !a.has(n.key) && (!KEEP_DOC.has(n.key) || n.auto));
     }
 }
 let confF = "all",

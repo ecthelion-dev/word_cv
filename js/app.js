@@ -4532,13 +4532,24 @@ function diffRow(e, t) {
     o = (e) => (void 0 !== xl.map[e] ? String(t[xl.map[e]] || "").trim() : "");
   for (const t of XL_TEXT_KEYS) {
     let l = o(t);
-    if ("grad_year" === t && !l) {
-      const e = o("grad_years").match(/\d{4}/g) || [],
-        t = o("otm");
-      (e.length || t) &&
-        (l = [e.length ? e[e.length - 1] + (n ? " yil" : " йил") : "", t]
-          .filter(Boolean)
-          .join(", "));
+    if ("grad_year" === t) {
+      if ("function" == typeof leadEdu && (l || o("grad_years") || o("otm")))
+        l = leadEdu(
+          e.fields.grad_year || "",
+          e.work || [],
+          o("grad_years"),
+          o("otm"),
+          l,
+          e.fields.specialty || o("specialty"),
+        );
+      else if (!l) {
+        const e = o("grad_years").match(/\d{4}/g) || [],
+          t = o("otm");
+        (e.length || t) &&
+          (l = [e.length ? e[e.length - 1] + (n ? " yil" : " йил") : "", t]
+            .filter(Boolean)
+            .join(", "));
+      }
     }
     if (
       l &&
@@ -4563,7 +4574,13 @@ function diffRow(e, t) {
         l = `${p2(a.d)}.${p2(a.m)}.${a.y}`;
         const n = parseDate(e.fields[t]);
         if (n && n.d === a.d && n.m === a.m && n.y === a.y) continue;
-      } else
+      } else if ("grad_year" === t && l.includes("\n"))
+        l = l
+          .split("\n")
+          .map((e) => cleanVal(e, n).replace(/\s+/g, " "))
+          .filter(Boolean)
+          .join("\n");
+      else
         ((l = cleanVal(l, n).replace(/\s+/g, " ")),
           ((["nationality", "party", "education", "title"].includes(t) &&
             !/\s/.test(l)) ||
@@ -10462,6 +10479,7 @@ function applyPrimary(e, t, a) {
         "field" !== e.kind ||
         o.has(e.key) ||
         (s.has(e.key) &&
+          !e.auto &&
           ((t = n.fields[e.key]),
           String(t || "").trim() &&
             !/^(?:йўқ|yo‘q|\?+)$/i.test(String(t).trim())))
@@ -10634,7 +10652,7 @@ function setDefaults(e) {
         continue;
       }
       const i = isEmptyV("position" === n.kind ? e.P.position : n.old);
-      n.on = !!i || (t && !a.has(n.key) && !KEEP_DOC.has(n.key));
+      n.on = !!i || (t && !a.has(n.key) && (!KEEP_DOC.has(n.key) || n.auto));
     }
 }
 let confF = "all",
@@ -12361,7 +12379,7 @@ function newStaffSec(e) {
   $("repZip").addEventListener("click", () => {
     ($("rep").close(), showView("list"), zipAll($("zipAll")));
   }));
-var lead = { list: null, phone: !1, sortMode: "excel" };
+var lead = { list: null, phone: !0, sortMode: "excel" };
 const toCyr = (e) => toScript(String(e || ""), !1),
   L_ = "[а-яёўқғҳ]",
   NOT_LEAD_RE =
@@ -12469,6 +12487,422 @@ function leadPosText(e, t, a) {
 }
 const fmtD = (e) =>
   e && e.y ? (e.d ? `${p2(e.d)}.${p2(e.m)}.${e.y}` : `${e.y}`) : "";
+const EDU_WB = "(?<![\\p{L}])",
+  EDU_WE = "(?![\\p{L}])",
+  eduWbRe = (e, t = "giu") => new RegExp(EDU_WB + "(?:" + e + ")" + EDU_WE, t);
+function fmtPhone(e) {
+  const t = String(e || "").trim();
+  if (!t) return "";
+  const a = t.replace(/\D/g, "");
+  if (12 === a.length && a.startsWith("998"))
+    return `+998 (${a.slice(3, 5)}) ${a.slice(5, 8)}-${a.slice(8, 10)}-${a.slice(10, 12)}`;
+  if (9 === a.length)
+    return `+998 (${a.slice(0, 2)}) ${a.slice(2, 5)}-${a.slice(5, 7)}-${a.slice(7, 9)}`;
+  if (10 === a.length && /^[08]/.test(a))
+    return `+998 (${a.slice(1, 3)}) ${a.slice(3, 6)}-${a.slice(6, 8)}-${a.slice(8, 10)}`;
+  const n = [];
+  for (const e of t.matchAll(
+    /(?:998)?[\s().-]*(\d{2})[\s().-]*(\d{3})[\s.-]*(\d{2})[\s.-]*(\d{2})/g,
+  ))
+    n.push(`+998 (${e[1]}) ${e[2]}-${e[3]}-${e[4]}`);
+  return n.length ? [...new Set(n)].join(", ") : t;
+}
+function cleanOtm(e) {
+  return (
+    (e = toCyr(String(e || ""))
+      .replace(/\s+/g, " ")
+      .replace(/^[1-9]\s*[.)]\s*/, "")
+      .replace(/^(?:олий|ўрта махсус|тугалланмаган олий)\s+/iu, "")
+      .replace(
+        eduWbRe(
+          "унверситети|унверстети|унивйерситети|унивеситети|уневерститут",
+        ),
+        "университети",
+      )
+      .replace(
+        eduWbRe("унверситет|унверстет|унивйерситет|унивеситет"),
+        "университет",
+      )
+      .replace(eduWbRe("инстиути|инсутути"), "институти")
+      .replace(eduWbRe("педагокика|пидагогика|педогогика"), "педагогика")
+      .replace(eduWbRe("техналогиялар|технологиялар"), "технологиялари")
+      .replace(eduWbRe("техналогиялари"), "технологиялари")
+      .replace(eduWbRe("техналогия"), "технология")
+      .replace(eduWbRe("инноватцион"), "инновацион")
+      .replace(eduWbRe("инноватсиялар|иннотвасиялар"), "инновациялар")
+      .replace(eduWbRe("архитектура\\s+қурилиш"), "архитектура-қурилиш")
+      .replace(/касб\s*-\s*[хҳ]унар/giu, "касб-ҳунар")
+      .replace(eduWbRe("кхк"), "касб-ҳунар коллежи")
+      .replace(eduWbRe("жахон"), "жаҳон")
+      .replace(eduWbRe("киме"), "кимё")
+      .replace(eduWbRe("алфраганус|афлраганус"), "Alfraganus")
+      .replace(/\bALFRAGANUS\b/gi, "Alfraganus")
+      .replace(eduWbRe("Беруний\\s+номли"), "Беруний номидаги")
+      .replace(/И\.?\s*Каримов\s+номидаги/giu, "Ислом Каримов номидаги")
+      .replace(/М\.?\s*Улу[гғ]бек\s+номидаги/giu, "Мирзо Улуғбек номидаги")
+      .replace(eduWbRe("ТДПУ"), "Тошкент давлат педагогика университети")
+      .replace(eduWbRe("ТерДУ"), "Термиз давлат университети")
+      .replace(
+        /Тошкент\s+ахборот\s+технологиялари(?!\s+университети)/giu,
+        "Тошкент ахборот технологиялари университети",
+      )
+      .replace(/^[.,;:\s-]+|[.,;:\s-]+$/g, "")
+      .trim())
+      ? e[0].toUpperCase() + e.slice(1)
+      : ""
+  );
+}
+function otmKey(e) {
+  return SpravkaCore.norm(
+    cleanOtm(e)
+      .replace(
+        /(?:мирзо улуғбек|низомий|ислом каримов|беруний|абдулла қодирий|абу али ибн сино)\s+номидаги\s+/giu,
+        "",
+      )
+      .replace(/\s+талабаси$/iu, ""),
+  );
+}
+function parseEduEntry(e) {
+  let t = toCyr(String(e || ""))
+    .replace(/\s+/g, " ")
+    .trim();
+  if (!t) return null;
+  t = t
+    .replace(/^[1-9]\s*[.)]\s*/, "")
+    .replace(/^(?:олий|ўрта махсус)\s*,?\s*/iu, "")
+    .trim();
+  let a = null;
+  const n = t.match(
+    /^(\d{4})\s*[-–—]\s*(\d{4})\s*-?\s*(?:йил|й\.|й)?\s*[,;.]?\s*(.*)$/iu,
+  );
+  if (n) ((a = +n[2]), (t = n[3]));
+  else {
+    const e = t.match(/^(\d{4})\s*-?\s*(?:йил|й\.|й)?\s*[,;.]?\s*(.*)$/iu);
+    e && ((a = +e[1]), (t = e[2]));
+  }
+  let i = "",
+    o = "",
+    l = !1,
+    s = !1;
+  (/магистратура\s+талабаси/iu.test(t) && a
+    ? (i = "bak")
+    : /аспирант|докторант/iu.test(t)
+      ? (i = "asp")
+      : /магистр|магистратура|магистрантура|магистрант|қўшма\s+дастур/iu.test(t)
+        ? (i = "mag")
+        : /бакалавр|бакалавриат|бакалвр/iu.test(t)
+          ? (i = "bak")
+          : /2-от|иккинчи\s+мутахассис|қайта\s+тайёрлаш/iu.test(t) &&
+            (i = "sec"),
+    /қўшма\s+дастур/iu.test(t) && (s = !0),
+    /кундузги/iu.test(t)
+      ? (o = "кундузги")
+      : /сирт[қк]и/iu.test(t)
+        ? (o = "сиртқи")
+        : /кечки/iu.test(t) && (o = "кечки"),
+    /талабаси\s*\)?$/iu.test(t) && !a && (l = !0));
+  let r = t
+    .replace(/\([^)]*\)/g, " ")
+    .replace(
+      eduWbRe(
+        "(?:бакалавриат|бакалавр|бакалвр|магистратура|магистрантура|магистри?|аспирантура|кундузги|сиртқи|сиртки)(?:\\s+(?:бўлими|босқичи|талабаси))?",
+      ),
+      " ",
+    )
+    .replace(/\s+қўшма\s+дастур\s+битирувчиси/giu, "")
+    .replace(/\s+талабаси$/iu, "")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (((r = cleanOtm(r)), !r)) return null;
+  return (
+    /коллеж|техникум|билим\s+юрти|лицей|мактаб/iu.test(r) && !i && (i = "col"),
+    { year: a, otm: r, level: i, mode: o, student: l, joint: s }
+  );
+}
+function splitDocGrad(e) {
+  if (!e) return [];
+  let t = toCyr(String(e)).trim();
+  t = t.replace(
+    /([)\wа-яёўқғҳ.,;])\s+(?=(?:[12]\s*[.)]\s*)?(?:\d{4}\s*[-–—]\s*)?(?:19\d\d|20\d\d)\s*(?:-?\s*(?:йил|й\.|yil|y\.)|\s+[А-ЯЁЎҚҒҲA-Z]))/giu,
+    "$1\n",
+  );
+  const a = t
+      .split(/\n+/)
+      .map((e) => e.trim())
+      .filter(Boolean),
+    n = [];
+  for (const e of a) {
+    const t = /^(?:[1-9]\s*[.)]\s*)?(?:олий\s+)?(?:\d{4})/iu.test(e),
+      a = n[n.length - 1] || "",
+      i =
+        /(?:университет[а-я]*|институт[а-я]*|академия[а-я]*|коллеж[а-я]*|техникум[а-я]*|юрти|\))[,;.]?$/iu.test(
+          a,
+        ),
+      o =
+        /университет|институт|академи|коллеж|техникум|билим\s+юрти/iu.test(e) &&
+        !/^(?:педагогика\s+университети|университети|институти)/iu.test(e);
+    !n.length || t || (i && o)
+      ? n.push(e.replace(/[,;]+$/, ""))
+      : (n[n.length - 1] = a + " " + e.replace(/[,;]+$/, ""));
+  }
+  const i = [];
+  for (const e of n)
+    for (const t of e.split(/;\s*|,\s*(?=(?:[1-9]\s*[.)]\s*)?\d{4})/)) {
+      const e = parseEduEntry(t);
+      e && i.push(e);
+    }
+  return i;
+}
+function splitXlGrad(e, t) {
+  const a = (String(e || "").match(/\b(?:19\d\d|20\d\d)\b/g) || []).map(Number);
+  let n = toCyr(String(t || "")).trim();
+  if (!a.length && !n) return [];
+  n = n.replace(
+    /(\((?:бакалавр|бакалавриат)[^)]*\))\s+(?=[А-ЯЁЎҚҒҲA-Z])/giu,
+    "$1\n",
+  );
+  const i = n
+      .split(/\n+/)
+      .map((e) => e.trim())
+      .filter(Boolean),
+    o = [];
+  for (const e of i) {
+    const t = o[o.length - 1] || "",
+      a = /[,;]$/.test(t),
+      n =
+        /(?:университет[а-я]*|институт[а-я]*|академия[а-я]*|коллеж[а-я]*|техникум[а-я]*|юрти|\))$/iu.test(
+          t,
+        ),
+      i = /^(?:университети|институти|педагогика\s+университети|\()/iu.test(e);
+    !o.length || ((a || n) && !i)
+      ? o.push(e)
+      : (o[o.length - 1] = t + " " + e);
+  }
+  const l = [];
+  for (const e of o)
+    for (const t of e.split(/,\s*(?!\()|;\s*/)) {
+      const e = t.trim();
+      e && l.push(e);
+    }
+  const s = [];
+  if (a.length && l.length)
+    if (a.length === l.length)
+      for (let e = 0; e < a.length; e++) {
+        const t = parseEduEntry(a[e] + " й. " + l[e]);
+        t && s.push(t);
+      }
+    else if (a.length > 1 && 1 === l.length)
+      for (const e of a) {
+        const t = parseEduEntry(e + " й. " + l[0]);
+        t && s.push(t);
+      }
+    else
+      for (let e = 0; e < Math.max(a.length, l.length); e++) {
+        const t = a[e] || "",
+          n = l[Math.min(e, l.length - 1)] || "",
+          i = parseEduEntry((t ? t + " й. " : "") + n);
+        i && s.push(i);
+      }
+  else if (l.length)
+    for (const e of l) {
+      const t = parseEduEntry(e);
+      t && s.push(t);
+    }
+  return s;
+}
+function parseWorkGrad(e) {
+  const t = [];
+  for (const a of e || []) {
+    const e = toCyr(String(a)).match(
+      /^\s*(\d{4})\s*[-–—]\s*(\d{4})\s*(?:йй\.|yy\.|й\.|y\.)?\s*-\s*(?:\.\s*-\s*)?(.*)$/iu,
+    );
+    if (!e) continue;
+    const n = +e[1],
+      i = +e[2],
+      o = e[3].trim();
+    if (i <= n || i - n > 7) continue;
+    if (
+      /бошли|мудир|ўринбосар|ўқитувчи|котиб|лаборант|ходим|инспектор|мутахассис|услубчи|тарбиячи|директор|декан|проректор|ректор/iu.test(
+        o,
+      )
+    )
+      continue;
+    if (!/(?:талабаси|магистранти|магистри)(?:\s*\([^)]*\))?\.?$/iu.test(o))
+      continue;
+    if (!/университет|институт|академи/iu.test(o)) continue;
+    const l = /магистр/iu.test(o);
+    let s = o
+      .replace(
+        /\s*(?:бакалавриат|бакалавр|магистратура)\s*(?:бўлими|босқичи)?\s*(?:талабаси|магистранти|магистри).*$/iu,
+        "",
+      )
+      .replace(/\s*(?:талабаси|магистранти|магистри).*$/iu, "")
+      .replace(
+        /\s+[“"«]?[А-Яа-яЁёЎўҚқҒғҲҳ\s-]+(?:факультети|факултети|бўлими|кафедраси|йўналиши).*$/iu,
+        "",
+      )
+      .trim();
+    ((s = cleanOtm(s)),
+      s &&
+        t.push({
+          year: i,
+          startYear: n,
+          otm: s,
+          level: l ? "mag" : "bak",
+          mode: "",
+          fromWork: !0,
+        }));
+  }
+  return t;
+}
+function leadEdu(e, t, a, n, i, o) {
+  const l = splitDocGrad(e),
+    s = i ? splitDocGrad(i) : splitXlGrad(a, n),
+    r = parseWorkGrad(t),
+    d = l.map((e) => ({ ...e }));
+  for (const e of d) {
+    if (!e.year) {
+      const t = s.find(
+        (t) =>
+          t.year &&
+          (otmKey(t.otm) === otmKey(e.otm) ||
+            ("mag" === e.level && t.year >= 2015)),
+      );
+      t && (e.year = t.year);
+    }
+    s.some((t) => t.student && otmKey(t.otm) === otmKey(e.otm)) &&
+      !e.year &&
+      (e.student = !0);
+  }
+  const c = d.filter((e) => "col" !== e.level && "asp" !== e.level).length;
+  for (const e of s) {
+    if (!e.year && d.length) continue;
+    const t = d.find((t) => t.year === e.year);
+    if (t) {
+      (!t.level && e.level && (t.level = e.level),
+        !t.mode && e.mode && (t.mode = e.mode),
+        e.otm.length > t.otm.length &&
+          (otmKey(e.otm) === otmKey(t.otm) ||
+            otmKey(e.otm).startsWith(otmKey(t.otm))) &&
+          (t.otm = e.otm));
+      continue;
+    }
+    if (1 === s.length && c >= 2) continue;
+    if (
+      1 === s.length &&
+      d.some(
+        (t) =>
+          t.year &&
+          t.year - e.year >= 4 &&
+          t.year - e.year <= 5 &&
+          otmKey(t.otm) === otmKey(e.otm) &&
+          "mag" !== t.level,
+      ) &&
+      !r.some((t) => t.year === e.year)
+    )
+      continue;
+    d.push({ ...e });
+  }
+  for (const e of r)
+    d.some(
+      (t) =>
+        t.year === e.year ||
+        (t.year &&
+          Math.abs(t.year - e.year) <= 1 &&
+          otmKey(t.otm) === otmKey(e.otm)),
+    ) || d.push({ ...e });
+  for (let e = 0; e < d.length; e++)
+    for (let t = e + 1; t < d.length; t++)
+      if (otmKey(d[e].otm) === otmKey(d[t].otm)) {
+        const a = d[e].otm.length >= d[t].otm.length ? d[e].otm : d[t].otm;
+        d[e].otm = d[t].otm = a;
+      }
+  d.sort(
+    (e, t) =>
+      (e.year || ("bak" === e.level ? 0 : 9999)) -
+      (t.year || ("bak" === t.level ? 0 : 9999)),
+  );
+  const p = d.filter(
+    (e) =>
+      "col" !== e.level &&
+      "asp" !== e.level &&
+      "sec" !== e.level &&
+      !e.student,
+  );
+  if (p.length >= 2) {
+    ("mag" === p[0].level &&
+      "asp" !== p[1].level &&
+      "sec" !== p[1].level &&
+      ((p[0].level = "bak"), (p[p.length - 1].level = "mag")),
+      p[0].level || (p[0].level = "bak"));
+    const e = p[p.length - 1];
+    !e.level && "сиртқи" !== e.mode && (e.level = "mag");
+  } else
+    1 === p.length &&
+      !p[0].level &&
+      /магистратура/iu.test(String(o || "")) &&
+      (p[0].level = "mag");
+  return d
+    .map((e) => {
+      if (e.student && !e.year) return `${e.otm} (талаба)`;
+      const t = [];
+      return (
+        e.joint && t.push("қўшма дастур"),
+        "bak" === e.level
+          ? t.push("бакалавр")
+          : "mag" === e.level
+            ? t.push("магистратура")
+            : "asp" === e.level && t.push("аспирантура"),
+        e.mode && (!t.length || "сиртқи" === e.mode) && t.push(e.mode),
+        (e.year ? `${e.year} й. ` : "") +
+          e.otm +
+          (t.length ? ` (${t.join(", ")})` : "")
+      );
+    })
+    .join("\n");
+}
+function cleanSpec(e) {
+  e = toCyr(String(e || ""))
+    .replace(/\s+/g, " ")
+    .replace(/\b[12]\s*\.\s*/g, ", ")
+    .replace(/^,\s*/, "")
+    .replace(/\s*\((?:магистратура|бакалавр|кундузги|сиртқи)\)/giu, "")
+    .replace(eduWbRe("ўфитиш"), "ўқитиш")
+    .replace(eduWbRe("адабиёцҳунос"), "адабиётшунос")
+    .replace(eduWbRe("менжменти"), "менежменти")
+    .replace(eduWbRe("диференсиал"), "дифференциал")
+    .replace(eduWbRe("електр"), "электр")
+    .replace(eduWbRe("енергетика"), "энергетика")
+    .replace(eduWbRe("инжинириги"), "инжиниринги")
+    .replace(eduWbRe("кампютер|компютер"), "компьютер")
+    .replace(eduWbRe("курилиши"), "қурилиши")
+    .replace(eduWbRe("Ўқитувчиси"), "ўқитувчиси")
+    .replace(/\s*,\s*/g, ", ")
+    .replace(/[.;,\s]+$/g, "")
+    .trim();
+  const t = e.split(/,\s*/).filter(Boolean),
+    a = [];
+  for (const e of t)
+    a.some((t) => SpravkaCore.norm(t) === SpravkaCore.norm(e)) || a.push(e);
+  const n = a.join(", ");
+  return n ? n[0].toLowerCase() + n.slice(1) : "";
+}
+function leadSpec(e, t) {
+  const a = cleanSpec(e),
+    n = cleanSpec(t);
+  if (!a) return n;
+  if (!n) return a;
+  if (SpravkaCore.norm(a) === SpravkaCore.norm(n)) return a;
+  const i = a.split(/,\s*/).filter(Boolean),
+    o = n.split(/,\s*/).filter(Boolean);
+  return o.length > i.length
+    ? n
+    : i.length > o.length
+      ? a
+      : a.length >= n.length
+        ? a
+        : n;
+}
 function phoneOf(e, t) {
   if (!t || !e) return "";
   const a = e.findIndex((e) =>
@@ -12476,7 +12910,7 @@ function phoneOf(e, t) {
       String(e || ""),
     ),
   );
-  return a >= 0 ? String(t[a] || "").trim() : "";
+  return a >= 0 ? fmtPhone(t[a]) : "";
 }
 function leadSource() {
   if (xl.lead && !xl.lead.same && xl.lead.rows && xl.lead.rows.length)
@@ -12566,8 +13000,8 @@ function leadRec(e) {
       since: fmtD(t),
       bd: n.birth_date,
       bp: n.birth_place,
-      grad: n.grad_year,
-      spec: n.specialty,
+      grad: leadEdu(n.grad_year, a.work, "", "", "", n.specialty),
+      spec: leadSpec(n.specialty, ""),
       deg: n.degree,
       title: n.title,
       photo: a.photo,
@@ -12575,12 +13009,9 @@ function leadRec(e) {
     };
   }
   const i = e.src,
-    o = (t) =>
-      void 0 !== i.map[t]
-        ? String(e.row[i.map[t]] || "")
-            .trim()
-            .replace(/\s+/g, " ")
-        : "",
+    oRaw = (t) =>
+      void 0 !== i.map[t] ? String(e.row[i.map[t]] || "").trim() : "",
+    o = (e) => oRaw(e).replace(/\s+/g, " "),
     l = (
       o("name") ||
       [o("surname"), o("first"), o("patr")].filter(Boolean).join(" ")
@@ -12594,24 +13025,26 @@ function leadRec(e) {
     t && (r = String(t));
   }
   const d = parseDate(r) || (a ? parseDate(a.since || "") : null),
-    c = parseDate(o("birth_date"));
-  let p = o("grad_year");
-  if (!p) {
-    const e = o("grad_years").match(/\d{4}/g) || [],
-      t = o("otm");
-    (e.length || t) &&
-      (p = [e.length ? e[e.length - 1] + " й." : "", t]
-        .filter(Boolean)
-        .join(" "));
-  }
+    c = parseDate(o("birth_date")),
+    p = leadEdu(
+      s(n.grad_year) ? n.grad_year : "",
+      a ? a.work : [],
+      oRaw("grad_years"),
+      oRaw("otm"),
+      oRaw("grad_year"),
+      s(n.specialty) ? n.specialty : oRaw("specialty"),
+    );
   return {
     name: niceName(l) || (a && a.name) || "",
     pos: leadPosText(o("dept"), o("position") || (a ? a.position : ""), e.rk),
     since: fmtD(d),
     bd: c ? fmtD(c) : n.birth_date,
     bp: o("birth_place") || n.birth_place,
-    grad: s(n.grad_year) ? n.grad_year : p,
-    spec: s(n.specialty) ? n.specialty : o("specialty"),
+    grad: p,
+    spec: leadSpec(
+      s(n.specialty) ? n.specialty : "",
+      s(oRaw("specialty")) ? oRaw("specialty") : "",
+    ),
     deg: s(o("degree")) ? o("degree") : n.degree,
     title: s(o("title")) ? o("title") : n.title,
     photo: a ? a.photo : null,
@@ -12901,7 +13334,7 @@ async function leadDocx() {
     } else g++;
     const w = String(a.grad || "")
       .split(/\n|;|,\s*(?=\d{4})/)
-      .map((e) => toCyr(e.trim().replace(/,$/, "")))
+      .map((e) => toCyr(e.trim().replace(/[,.]$/, "")))
       .filter(Boolean);
     let $ = w
       .map((e, n) => i(t(e) + (n < w.length - 1 || !h(a.spec) ? "," : "")))

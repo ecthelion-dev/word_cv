@@ -1196,13 +1196,24 @@ function diffRow(e, t) {
     o = (e) => (void 0 !== xl.map[e] ? String(t[xl.map[e]] || "").trim() : "");
   for (const t of XL_TEXT_KEYS) {
     let l = o(t);
-    if ("grad_year" === t && !l) {
-      const e = o("grad_years").match(/\d{4}/g) || [],
-        t = o("otm");
-      (e.length || t) &&
-        (l = [e.length ? e[e.length - 1] + (n ? " yil" : " йил") : "", t]
-          .filter(Boolean)
-          .join(", "));
+    if ("grad_year" === t) {
+      if ("function" == typeof leadEdu && (l || o("grad_years") || o("otm")))
+        l = leadEdu(
+          e.fields.grad_year || "",
+          e.work || [],
+          o("grad_years"),
+          o("otm"),
+          l,
+          e.fields.specialty || o("specialty"),
+        );
+      else if (!l) {
+        const e = o("grad_years").match(/\d{4}/g) || [],
+          t = o("otm");
+        (e.length || t) &&
+          (l = [e.length ? e[e.length - 1] + (n ? " yil" : " йил") : "", t]
+            .filter(Boolean)
+            .join(", "));
+      }
     }
     if (
       l &&
@@ -1227,7 +1238,13 @@ function diffRow(e, t) {
         l = `${p2(a.d)}.${p2(a.m)}.${a.y}`;
         const n = parseDate(e.fields[t]);
         if (n && n.d === a.d && n.m === a.m && n.y === a.y) continue;
-      } else
+      } else if ("grad_year" === t && l.includes("\n"))
+        l = l
+          .split("\n")
+          .map((e) => cleanVal(e, n).replace(/\s+/g, " "))
+          .filter(Boolean)
+          .join("\n");
+      else
         ((l = cleanVal(l, n).replace(/\s+/g, " ")),
           ((["nationality", "party", "education", "title"].includes(t) &&
             !/\s/.test(l)) ||
