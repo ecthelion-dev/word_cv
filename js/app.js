@@ -12398,7 +12398,25 @@ const toCyr = (e) => toScript(String(e || ""), !1),
   L_ = "[а-яёўқғҳ]",
   NOT_LEAD_RE =
     /ёрдамчи|ердамчи|маслаҳатчи|маслахатчи|котиб|кабинет|лаборатор|навбатчи|методист|инспектор|мутахассис|ходими(?:\s|$)|ўқитувчи|укитувчи|доцент|профессор|ассистент|мураббий|ўринбосар|уринбосар/;
+function isCenterSubDeptHead(e, t) {
+  const a = toCyr(String(e || ""))
+      .replace(/\s+/g, " ")
+      .trim(),
+    n = toCyr(String(t || ""))
+      .replace(/\s+/g, " ")
+      .trim();
+  return (
+    (/марказ(?:и)?(?![\p{L}])/iu.test(n) &&
+      /(?:бўлим(?:и)?|булим(?:и)?|сектор(?:и)?)\s+(?:бошлиғи|бошлиги|бошлиқ|бошлик|раҳбари|рахбари|мудири)/iu.test(
+        a,
+      )) ||
+    /марказ(?:и)?\s+.+?\s+(?:бўлим(?:и)?|булим(?:и)?|сектор(?:и)?)\s+(?:бошлиғи|бошлиги|бошлиқ|бошлик|раҳбари|рахбари|мудири)/iu.test(
+      a,
+    )
+  );
+}
 function leadRank(e) {
+  if (isCenterSubDeptHead(e, "")) return 0;
   const t =
     " " +
     toCyr(e)
@@ -12446,6 +12464,7 @@ const LEAD_CAT_RE =
     ),
   };
 function leadRankRow(e, t) {
+  if (isCenterSubDeptHead(e, t)) return 0;
   const a = leadRank(e);
   if (a) return a;
   const n = toCyr(e).trim();
@@ -12493,17 +12512,7 @@ function leadPosText(e, t, a) {
   let l;
   if (a >= 1 && a <= 3) l = o || i;
   else if (4 === a || 5 === a)
-    if (i && !/^(?:ректорат|раҳбарият|рахбарият)$/i.test(i)) {
-      const e =
-        4 === a &&
-        r &&
-        !/^(?:бўлим(?:и)?|марказ(?:и)?|бошқарма(?:си)?|офис(?:и)?|сектор(?:и)?|хизмат(?:и)?|бош\s+бухгалтер)$/i.test(
-          r,
-        ) &&
-        !SpravkaCore.norm(i).includes(SpravkaCore.norm(r)) &&
-        !SpravkaCore.norm(r).includes(SpravkaCore.norm(i));
-      l = e ? `${i} ${r}` : i;
-    } else l = r;
+    l = i && !/^(?:ректорат|раҳбарият|рахбарият)$/i.test(i) ? i : r;
   else if (
     7 === a &&
     i &&
@@ -13181,6 +13190,7 @@ function leadInit() {
       if (!o) return;
       if (e.cat && !e.cat(a, n)) return;
       if (isHeadRow(a)) return;
+      if (isCenterSubDeptHead(i("position"), i("dept"))) return;
       const l = leadRankRow(i("position"), i("dept"));
       ("main" !== e.kind || e.cat || l) &&
         t.push({ row: a, src: e, idx: n, rk: l || 9, it: findDoc(o), on: !0 });
