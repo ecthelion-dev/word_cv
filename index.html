@@ -191,13 +191,16 @@
         <details class="xld" id="xlD"><summary><span class="xlhead"><h2 id="xlH">Excel bilan solishtirish</h2><span>Kadrlar bazasidagi ma'lumot bilan solishtirish va ma'lumotnomasi yo'q xodimga yangi ma'lumotnoma yaratish</span></span><span class="opt">ixtiyoriy</span></summary>
         <div class="xlbody">
         <input id="xlFile" type="file" accept=".xlsx,.csv" hidden>
-        <p class="hint" id="xlInfo">Kadrlar bazasi Excel faylini tanlang: dastur ma'lumotnomalarni u bilan solishtiradi va o'zgargan ma'lumotlarni ko'rsatadi. Excel'dan faqat namunadagi maydonlar olinadi.</p>
+        <input id="xlJobFile" type="file" accept=".xlsx" hidden>
+        <p class="hint" id="xlInfo">1-Excel — employees.xlsx: F.I.Sh., stavka va ishga qabul qilingan sana. Bir xodimda bir nechta yozuv bo‘lsa, eng erta sana ish boshlagan kun sifatida olinadi.</p>
         <div class="acts">
-          <button type="button" class="btn2" id="xlLink" hidden title="Kompyuterdagi Excel faylga bog'lanadi: fayl o'zgarsa, ma'lumot o'zi yangilanadi">Kompyuterdagi Excel'ga ulash</button>
+          <button type="button" class="btn2" id="xlLink" hidden title="Kompyuterdagi employees Excel faylga bog‘lanadi: fayl o‘zgarsa, ma’lumot o‘zi yangilanadi">employees Excel'ga ulash</button>
           <button type="button" class="btn2" id="xlRefresh" hidden>Yangilash</button>
-          <button type="button" class="btn2" id="xlPick">Excel faylni tanlash</button>
+          <button type="button" class="btn2" id="xlPick">1-Excel: Stavka va sana</button>
+          <button type="button" class="btn2" id="xlJobPick">2-Excel: Lavozim va bo‘lim</button>
         </div>
-        <label class="chk"><input type="checkbox" id="xlPrimary" checked> <span><b>Excel'dagi ma'lumot to'g'ri — farqlarni avtomatik tuzatish.</b> Tug'ilgan sana va joyi, millati, ma'lumoti, tamomlagan, mutaxassisligi, ilmiy daraja, F.I.Sh. imlosi va boshqalar Excel bo'yicha o'zi tuzatiladi. Faqat <b>lavozim, bo'lim yoki tayinlangan sanasi</b> farq qilsa, jadvalda sizga ko'rsatiladi. Siz qo'lda tuzatgan maydonlar o'zgarmaydi; hammasini «Bekor qilish» bilan qaytarish mumkin. Belgini olsangiz — har bir farq taklif sifatida jadvalga tushadi.</span></label>
+        <p class="hint" id="xlJobInfo">2-Excel: lavozim va bo‘limlar shu fayldan olinadi. «ходимлар рўйхати», «асосий» va «профессор-ўқитувчилар» varaqlari tekshiriladi.</p>
+        <label class="chk"><input type="checkbox" id="xlPrimary" checked> <span><b>Excel manbalaridagi ma'lumot to'g'ri — farqlarni avtomatik tuzatish.</b> Tug'ilgan sana va joyi, millati, ma'lumoti, tamomlagan, mutaxassisligi, ilmiy daraja, F.I.Sh. imlosi va boshqalar Excel bo'yicha o'zi tuzatiladi. Faqat <b>lavozim, bo'lim yoki tayinlangan sanasi</b> farq qilsa, jadvalda sizga ko'rsatiladi. Siz qo'lda tuzatgan maydonlar o'zgarmaydi; hammasini «Bekor qilish» bilan qaytarish mumkin. Belgini olsangiz — har bir farq taklif sifatida jadvalga tushadi.</span></label>
         <div class="box"><div id="xlMap" hidden></div><div class="acts" id="xlActs" hidden>
           <button type="button" class="btn" id="xlRun">Solishtirish</button>
           <button type="button" class="btn2" id="xlApplyAll" hidden>Barcha o'zgarishlarni qo'llash</button>
