@@ -14031,6 +14031,13 @@ XL_FIELDS.push([
   ["ставка", "stavka", "stavkasi", "ставкаси", "stavka miqdori", "штат бирлиги"],
 ]);
 
+/* The personnel workbook uses the long-form Cyrillic F.I.Sh. header. */
+XL_FIELDS[0][2].push(
+  "фамилияси исми ва отасининг исми",
+  "familiyasi ismi va otasining ismi",
+  "фамилия имя и отчество",
+);
+
 function dualEnsureSources() {
   if (!xl.sources || typeof xl.sources !== "object") {
     xl.sources = { employee: null, positions: null, merged: false };
@@ -14469,3 +14476,25 @@ store.restore = async function (...args) {
 
 // Both sources are required before the comparison can run.
 dualSetWaitingState();
+
+// Local-only read-only hook used by the Chromium integration test.
+if (
+  typeof window !== "undefined" &&
+  window.location &&
+  window.location.hostname === "127.0.0.1" &&
+  new URLSearchParams(window.location.search).has("e2e")
+) {
+  window.__dualExcelDiagnostics = () => {
+    const row = (xl.rows && xl.rows[0]) || [];
+    const map = xl.map || {};
+    return {
+      employeeRows: (xl.sources.employee && xl.sources.employee.rows.length) || 0,
+      hireDate: map.since_date === undefined ? "" : String(row[map.since_date] || ""),
+      rate: map.rate === undefined ? "" : String(row[map.rate] || ""),
+      position: map.position === undefined ? "" : String(row[map.position] || ""),
+      department: map.dept === undefined ? "" : String(row[map.dept] || ""),
+      matchedPositions: xl.sources.matchedPositions || 0,
+      missingPositions: (xl.sources.missingPositions || []).length,
+    };
+  };
+}
