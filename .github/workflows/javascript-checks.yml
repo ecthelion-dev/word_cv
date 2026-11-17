@@ -13,6 +13,10 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      - name: Build application bundles
+        run: npm run build
+      - name: Verify generated bundles are committed
+        run: git diff --exit-code -- js/core.js js/app.js js/parseworker.js
       - name: Check JavaScript syntax
         run: |
           node --check js/core.js
@@ -25,3 +29,9 @@ jobs:
           node --check js/app.js
       - name: Run unit tests
         run: npm test
+      - name: Install Chromium test dependency
+        run: |
+          npm install --no-save playwright
+          npx playwright install --with-deps chromium
+      - name: Run browser integration test
+        run: npm run test:browser
