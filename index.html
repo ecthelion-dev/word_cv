@@ -200,6 +200,7 @@
           <button type="button" class="btn2" id="xlJobPick">2-Excel: Lavozim va bo‘lim</button>
         </div>
         <p class="hint" id="xlJobInfo">2-Excel: lavozim va bo‘limlar shu fayldan olinadi. «ходимлар рўйхати», «асосий» va «профессор-ўқитувчилар» varaqlari tekshiriladi.</p>
+        <div id="xlJobMissing" class="xlnew" hidden></div>
         <label class="chk"><input type="checkbox" id="xlPrimary" checked> <span><b>Excel manbalaridagi ma'lumot to'g'ri — farqlarni avtomatik tuzatish.</b> Tug'ilgan sana va joyi, millati, ma'lumoti, tamomlagan, mutaxassisligi, ilmiy daraja, F.I.Sh. imlosi va boshqalar Excel bo'yicha o'zi tuzatiladi. Faqat <b>stavka, lavozim, bo'lim yoki ishga qabul qilingan sana</b> farq qilsa, jadvalda sizga ko'rsatiladi. Siz qo'lda tuzatgan maydonlar o'zgarmaydi; hammasini «Bekor qilish» bilan qaytarish mumkin. Belgini olsangiz — har bir farq taklif sifatida jadvalga tushadi.</span></label>
         <div class="box"><div id="xlMap" hidden></div><div class="acts" id="xlActs" hidden>
           <button type="button" class="btn" id="xlRun">Solishtirish</button>
@@ -350,7 +351,10 @@
     <section class="view" id="vLead" hidden>
       <div class="vhead">
         <h1>Rahbarlar ma'lumoti<small>«… раҳбарлари тўғрисида МАЪЛУМОТ» jadvali — ma'lumotnomalar va Excel'dan avtomatik</small></h1>
-        <button type="button" class="btn" id="ldGo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>Word yuklab olish</button>
+        <div class="acts">
+          <button type="button" class="btn2" id="ldXlsx">Excel yuklab olish</button>
+          <button type="button" class="btn" id="ldGo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>Word yuklab olish</button>
+        </div>
       </div>
       <div class="card ldset">
         <div class="ldgrid">
@@ -360,6 +364,7 @@
           <label><span>Yozuv</span><select id="ldScr"><option value="cyr">Кирилл</option><option value="lat">Lotin</option></select></label>
         </div>
         <div class="ldopts">
+          <label class="tsel">Bo‘lim / toifa <select id="ldScope"><option value="lead">Rahbar kadrlar</option><option value="all">Barcha xodimlar (bo‘limlar kesimida)</option></select></label>
           <label class="tsel">Tartib <select id="ldSort"><option value="excel">Excel'dagidek</option><option value="rank">Lavozim darajasi bo'yicha</option></select></label>
           <label class="chk"><input type="checkbox" id="ldPhone" checked> Telefon raqamini Excel'dan olish (shaxsiy ma'lumot — faqat shu jadval uchun)</label>
         </div>

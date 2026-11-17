@@ -1,0 +1,237 @@
+const test = require("node:test");
+const assert = require("node:assert/strict");
+const fs = require("node:fs");
+const path = require("node:path");
+const vm = require("node:vm");
+
+const ROOT = path.resolve(__dirname, "..");
+
+function createAppContext() {
+  const mockEl = () => ({
+    value: "",
+    checked: false,
+    hidden: false,
+    disabled: false,
+    textContent: "",
+    innerHTML: "",
+    children: [],
+    childNodes: [],
+    options: [],
+    selectedOptions: [{ textContent: "" }],
+    parentElement: {},
+    parentNode: {},
+    addEventListener: () => {},
+    append: () => {},
+    appendChild: () => {},
+    remove: () => {},
+    setAttribute: () => {},
+    getAttribute: () => null,
+    closest: () => mockEl(),
+    querySelector: () => mockEl(),
+    querySelectorAll: () => [],
+    style: {},
+    dataset: {},
+    classList: {
+      add: () => {},
+      remove: () => {},
+      toggle: () => {},
+      contains: () => false,
+    },
+  });
+
+  const ctx = {
+    window: null,
+    self: null,
+    global: null,
+    console,
+    setTimeout: () => {},
+    clearTimeout: () => {},
+    setInterval: () => {},
+    clearInterval: () => {},
+    addEventListener: () => {},
+    document: {
+      body: mockEl(),
+      documentElement: mockEl(),
+      getElementById: () => mockEl(),
+      querySelectorAll: () => [],
+      querySelector: () => mockEl(),
+      createElement: () => mockEl(),
+      createDocumentFragment: () => mockEl(),
+      addEventListener: () => {},
+    },
+    localStorage: {
+      getItem: () => null,
+      setItem: () => {},
+      removeItem: () => {},
+    },
+    indexedDB: null,
+    location: { href: "http://localhost/", hostname: "localhost", search: "" },
+    navigator: {},
+  };
+  ctx.window = ctx;
+  ctx.self = ctx;
+  ctx.global = ctx;
+  vm.createContext(ctx);
+  vm.runInContext(fs.readFileSync(path.join(ROOT, "js/core.js"), "utf8"), ctx);
+  ctx.SpravkaCore = ctx.self.SpravkaCore;
+  for (const file of [
+    "js/coi-engine.js",
+    "js/science-engine.js",
+    "js/pdf-engine.js",
+    "js/file-error.js",
+    "js/scanned-pdf-ocr.js",
+    "js/app.js",
+  ]) {
+    vm.runInContext(fs.readFileSync(path.join(ROOT, file), "utf8"), ctx);
+  }
+  return ctx;
+}
+
+const app = createAppContext();
+
+test("fmtPhone normalizes 9-, 10-, and 12-digit Uzbek phone numbers", () => {
+  assert.equal(app.fmtPhone("93-638-23-26"), "+998 (93) 638-23-26");
+  assert.equal(app.fmtPhone("998915897996"), "+998 (91) 589-79-96");
+  assert.equal(app.fmtPhone("+998 (90) 978-09-01"), "+998 (90) 978-09-01");
+  assert.equal(app.fmtPhone("0991234567"), "+998 (99) 123-45-67");
+});
+
+test("leadEdu merges bachelor and master degrees and omits aspirantura/retraining", () => {
+  const merged = app.leadEdu(
+    "Термиз давлат университети (бакалвр, кундузги)\nТермиз давлат педагогика институти (магистратура)",
+    [],
+    "2023",
+    "Термиз давлат педагогика институти",
+    "",
+    "Бошланғич таълим",
+  );
+  assert.equal(
+    merged,
+    "Термиз давлат университети (бакалавр)\n2023 й. Термиз давлат педагогика институти (магистратура)",
+  );
+
+  const filteredAsp = app.leadEdu(
+    "2008 й. Низомий номидаги Тошкент давлат педагогика университети (бакалавр)\n2011 й. Низомий номидаги Тошкент давлат педагогика университети (магистратура)\n2013 й. Низомий номидаги Тошкент давлат педагогика университети (аспирантура)",
+    [],
+    "",
+    "",
+    "",
+    "",
+  );
+  assert.equal(
+    filteredAsp,
+    "2008 й. Низомий номидаги Тошкент давлат педагогика университети (бакалавр)\n2011 й. Низомий номидаги Тошкент давлат педагогика университети (магистратура)",
+  );
+});
+
+test("cleanSpec fixes typos, removes quotes, and deduplicates overlapping prefix", () => {
+  assert.equal(
+    app.cleanSpec('физика, "Композисион кукунли материаллар ва қопламалар"'),
+    "физика, композицион кукунли материаллар ва қопламалар",
+  );
+  assert.equal(
+    app.cleanSpec("филология: Рус тили, Филология"),
+    "филология: рус тили",
+  );
+  assert.equal(
+    app.cleanSpec("бюджет корхоналари бухгалтерия"),
+    "бюджет корхоналари бухгалтери",
+  );
+});
+
+test("isCenterSubDeptHead excludes center sub-department heads while keeping center heads", () => {
+  assert.equal(
+    app.isCenterSubDeptHead(
+      "Тармоқларни бошқариш бўлими бошлиғи",
+      "Рақамли таълим технологиялар маркази",
+    ),
+    true,
+  );
+  assert.equal(
+    app.isCenterSubDeptHead(
+      "Марказ бошлиғи",
+      "Рақамли таълим технологиялар маркази",
+    ),
+    false,
+  );
+});
+
+test("pickBestWords preserves line breaks and picks better Uzbek orthography per word", () => {
+  const best = app.pickBestWords(
+    "Сурхондарё вилояти, Шурчи тумани",
+    "Сурхандарё вилояти, Шўрчи тумани",
+    false,
+  );
+  assert.equal(best, "Сурхондарё вилояти, Шўрчи тумани");
+
+  const multi = app.pickBestWords(
+    "2006 й. Ўзбекистон Миллий университети",
+    "2006 й. Ўзбекистон Миллий университети (бакалавр)\n2009 й. Ўзбекистон Миллий университети (магистратура)",
+    false,
+  );
+  assert.equal(
+    multi,
+    "2006 й. Ўзбекистон Миллий университети (бакалавр)\n2009 й. Ўзбекистон Миллий университети (магистратура)",
+  );
+});
+
+test("diffRow auto-resolves spelling differences without proposing worse Excel spelling", () => {
+  vm.runInContext(
+    `
+    xl.headers = ["Ф.И.Ш.", "Туғилган жойи", "Лавозими"];
+    xl.map = { name: 0, birth_place: 1, position: 2 };
+    `,
+    app,
+  );
+
+  // Excel has better orthography -> auto & spell flags set
+  const docWorse = {
+    S: { latin: false, labels: { birth_place: "Туғилган жойи" } },
+    position: "Термиз давлат педагогика инстетути ўқитувчиси",
+    since: "",
+    work: [],
+    fields: { birth_place: "Сурхондарё вилояти, Шурчи тумани" },
+  };
+  const diffs1 = app.diffRow(docWorse, [
+    "Алиев Вали",
+    "Сурхондарё вилояти, Шўрчи тумани",
+    "Термиз давлат педагогика институти ўқитувчиси",
+  ]);
+  const bp1 = diffs1.find((c) => c.key === "birth_place");
+  assert.equal(bp1 && bp1.spell, true);
+  assert.equal(bp1 && bp1.auto, true);
+  assert.equal(bp1 && bp1.val, "Сурхондарё вилояти, Шўрчи тумани");
+
+  // DOCX already has better orthography -> no diff proposed
+  const docBetter = {
+    S: { latin: false, labels: { birth_place: "Туғилган жойи" } },
+    position: "Термиз давлат педагогика институти ўқитувчиси",
+    since: "",
+    work: [],
+    fields: { birth_place: "Сурхондарё вилояти, Шўрчи тумани" },
+  };
+  const diffs2 = app.diffRow(docBetter, [
+    "Алиев Вали",
+    "Сурхондарё вилояти, Шурчи тумани",
+    "Термиз давлат педагогика институти укитувчиси",
+  ]);
+  assert.equal(diffs2.length, 0);
+});
+
+test("dualReadPositionWorkbook supports priority sheets and fallback generic sheets", () => {
+  const generic = app.dualReadPositionWorkbook([
+    {
+      name: "Sheet1",
+      rows: [
+        ["№", "Ф.И.Ш.", "Бўлими", "Лавозими"],
+        ["1", "Каримов Салим", "Математика кафедраси", "Ўқитувчи"],
+      ],
+    },
+  ]);
+  assert.equal(generic.records.length, 1);
+  assert.equal(generic.records[0].position, "Ўқитувчи");
+
+  const idx = app.dualBuildPositionIndex(generic.records);
+  const found = app.dualFindPosition("Каримов Салим", idx);
+  assert.equal(found && found.dept, "Математика кафедраси");
+});

@@ -329,7 +329,7 @@ function newStaffSec(e) {
   $("repZip").addEventListener("click", () => {
     ($("rep").close(), showView("list"), zipAll($("zipAll")));
   }));
-var lead = { list: null, phone: !0, sortMode: "excel" };
+var lead = { list: null, phone: !0, sortMode: "excel", scope: "lead" };
 const toCyr = (e) => toScript(String(e || ""), !1),
   L_ = "[а-яёўқғҳ]",
   NOT_LEAD_RE =
@@ -905,7 +905,7 @@ function cleanSpec(e) {
     const t = SpravkaCore.norm(e);
     a.some((a) => {
       const n = SpravkaCore.norm(a);
-      return n === t || (a.includes(":") && n.startsWith(t + " "));
+      return n === t || (a.includes(":") && n.startsWith(t));
     }) || a.push(e);
   }
   return a.join(", ");
@@ -1173,30 +1173,67 @@ function leadRec(e) {
     phone: phoneOf(i.headers, e.row),
   };
 }
+function leadScopeDepts(e) {
+  const t = new Map();
+  if (e && e.rows && void 0 !== e.map.dept)
+    for (const a of e.rows) {
+      if (isHeadRow(a)) continue;
+      const n = cleanDeptPos(a[e.map.dept] || "");
+      if (!n || CAT_RE.test(n) || LEAD_CAT_RE.test(n)) continue;
+      const i = SpravkaCore.norm(n);
+      i && !t.has(i) && t.set(i, n);
+    }
+  return [...t.entries()].sort((e, t) => e[1].localeCompare(t[1], "ru"));
+}
+function fillLeadScopes(e) {
+  const t = $("ldScope");
+  if (!t) return;
+  const a = lead.scope || "lead",
+    n = leadScopeDepts(e);
+  t.textContent = "";
+  t.append(
+    Object.assign(el("option", "", "Rahbar kadrlar"), { value: "lead" }),
+    Object.assign(el("option", "", "Barcha xodimlar (bo‘limlar kesimida)"), {
+      value: "all",
+    }),
+  );
+  for (const [e, a] of n)
+    t.append(Object.assign(el("option", "", a), { value: "dept:" + e }));
+  t.value = [...t.options].some((e) => e.value === a) ? a : "lead";
+  lead.scope = t.value;
+}
 function leadInit() {
   const e = leadSource(),
-    t = [];
+    t = [],
+    a = lead.scope || "lead",
+    n = "lead" === a,
+    i = a.startsWith("dept:") ? a.slice(5) : "";
   if (e) {
-    const a = buildDocIndex();
-    e.rows.forEach((n, i) => {
-      const o = (t) =>
-          void 0 !== e.map[t] ? String(n[e.map[t]] || "").trim() : "",
-        l = (
-          o("name") ||
-          [o("surname"), o("first"), o("patr")].filter(Boolean).join(" ")
+    const o = buildDocIndex();
+    e.rows.forEach((l, s) => {
+      const r = (t) =>
+          void 0 !== e.map[t] ? String(l[e.map[t]] || "").trim() : "",
+        d = (
+          r("name") ||
+          [r("surname"), r("first"), r("patr")].filter(Boolean).join(" ")
         ).trim();
-      if (!l) return;
-      if (e.cat && !e.cat(n, i)) return;
-      if (isHeadRow(n)) return;
-      if (isCenterSubDeptHead(o("position"), o("dept"))) return;
-      const s = leadRankRow(o("position"), o("dept"));
-      ("main" !== e.kind || e.cat || s) &&
+      if (!d) return;
+      if (isHeadRow(l)) return;
+      if (n) {
+        if (e.cat && !e.cat(l, s)) return;
+        if (isCenterSubDeptHead(r("position"), r("dept"))) return;
+      } else if (i) {
+        const e = SpravkaCore.norm(cleanDeptPos(r("dept")));
+        if (e !== i) return;
+      }
+      const c = leadRankRow(r("position"), r("dept"));
+      (!n || "main" !== e.kind || e.cat || c) &&
         t.push({
-          row: n,
+          row: l,
           src: e,
-          idx: i,
-          rk: s || 9,
-          it: findDoc(l, a),
+          idx: s,
+          rk: c || 9,
+          it: findDoc(d, o),
           on: !0,
         });
     });
@@ -1204,10 +1241,10 @@ function leadInit() {
     for (const e of items) {
       if (!e.P || e.excluded || !(e.P.name || "").trim()) continue;
       const a = leadRank(e.P.position || "");
-      a && t.push({ it: e, rk: a, idx: items.indexOf(e), on: !0 });
+      (!n || a) && t.push({ it: e, rk: a || 9, idx: items.indexOf(e), on: !0 });
     }
   "rank" === lead.sortMode && t.sort((e, t) => e.rk - t.rk || e.idx - t.idx);
-  {
+  if (n) {
     const e = (e) =>
         toCyr(
           e.row && e.src
@@ -1223,11 +1260,12 @@ function leadInit() {
       t.splice(n, 0, e);
     }
   }
-  const a = new Map((lead.list || []).map((e) => [e.row || e.it, e.on]));
-  for (const e of t) a.has(e.row || e.it) && (e.on = a.get(e.row || e.it));
+  const o = new Map((lead.list || []).map((e) => [e.row || e.it, e.on]));
+  for (const e of t) o.has(e.row || e.it) && (e.on = o.get(e.row || e.it));
   ((lead.list = t),
     (lead.srcKind = e ? e.kind : "docs"),
-    (lead.srcName = e ? e.name : ""));
+    (lead.srcName = e ? e.name : ""),
+    fillLeadScopes(e));
 }
 function renderLead(e) {
   (lead.list && !e) || leadInit();
@@ -1558,14 +1596,110 @@ async function leadDocx() {
     }
   );
 }
+async function leadXlsx() {
+  const e = (lead.list || []).filter((e) => e.on),
+    t = "lat" === $("ldScr").value,
+    a = (e) => toScript(String(e || ""), t),
+    n = [
+      [
+        "№",
+        a("Лавозими"),
+        a("Тайинланган сана"),
+        a("Ф.И.Ш."),
+        a("Туғилган санаси"),
+        a("Туғилган жойи"),
+        a("Тамомлаган ОТМ"),
+        a("Мутахассислиги"),
+        a("Илмий даражаси"),
+        a("Илмий унвони"),
+        ...(lead.phone ? [a("Телефон")] : []),
+      ],
+    ];
+  e.forEach((e, t) => {
+    const i = leadRec(e);
+    n.push([
+      t + 1,
+      a(i.pos),
+      i.since || "",
+      a(i.name),
+      i.bd || "",
+      a(i.bp),
+      a(i.grad),
+      a(i.spec),
+      a(i.deg),
+      a(i.title),
+      ...(lead.phone ? [i.phone || ""] : []),
+    ]);
+  });
+  return {
+    bytes: await xlsxBuild([
+      {
+        name: "Ma'lumot",
+        rows: n,
+        head: 1,
+        freeze: !0,
+        filter: !0,
+        widths: [
+          5,
+          34,
+          14,
+          30,
+          14,
+          28,
+          42,
+          32,
+          26,
+          18,
+          ...(lead.phone ? [20] : []),
+        ],
+      },
+    ]),
+    n: e.length,
+  };
+}
 ($("ldPhone").addEventListener("change", () => {
   ((lead.phone = $("ldPhone").checked), renderLead());
 }),
+  $("ldScope").addEventListener("change", () => {
+    ((lead.scope = $("ldScope").value),
+      ($("ldTitle").value =
+        "lead" === lead.scope
+          ? `${$("ldOrg").value || "Ташкилот"} раҳбарлари тўғрисида`
+          : "all" === lead.scope
+            ? `${$("ldOrg").value || "Ташкилот"} ходимлари тўғрисида`
+            : `${$("ldOrg").value || "Ташкилот"} (${$("ldScope").selectedOptions[0].textContent}) ходимлари тўғрисида`),
+      renderLead(!0));
+  }),
   $("ldSort").addEventListener("change", () => {
     ((lead.sortMode = $("ldSort").value), renderLead(!0));
   }),
   $("ldOrg").addEventListener("change", () => {
-    $("ldTitle").value = `${$("ldOrg").value} раҳбарлари тўғрисида`;
+    $("ldTitle").value =
+      "lead" === lead.scope
+        ? `${$("ldOrg").value} раҳбарлари тўғрисида`
+        : `${$("ldOrg").value} ходимлари тўғрисида`;
+  }),
+  $("ldXlsx").addEventListener("click", async () => {
+    const e = $("ldXlsx");
+    e.disabled = !0;
+    try {
+      const t = await leadXlsx(),
+        a = $("ldDate").value
+          ? $("ldDate").value.split("-").reverse().join(".")
+          : "";
+      (await save(
+        e,
+        $("ldNote"),
+        `Xodimlar_malumot_jadvali${a ? "_" + a : ""}.xlsx`,
+        t.bytes,
+      )) && toast(`Excel tayyor: ${t.n} ta yozuv ✓`);
+    } catch (e) {
+      (($("ldNote").className = "msg err"),
+        ($("ldNote").textContent =
+          "Excel'ni tayyorlab bo‘lmadi: " + ((e && e.message) || e)));
+    } finally {
+      e.disabled = !1;
+    }
   }),
   $("ldGo").addEventListener("click", async () => {
     const e = $("ldGo");

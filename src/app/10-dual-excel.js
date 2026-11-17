@@ -340,6 +340,56 @@ function dualReady() {
   );
 }
 
+function dualRenderMissingPositions(missing) {
+  const box = $("xlJobMissing");
+  if (!box) return;
+  box.textContent = "";
+  if (!missing || !missing.length || !(xl.sources && xl.sources.merged)) {
+    box.hidden = true;
+    return;
+  }
+  box.hidden = false;
+  const det = el("details", "newd");
+  const sum = el("summary");
+  sum.append(
+    el("b", "", "2-Excel'da lavozimi topilmagan xodimlar (" + missing.length + " ta)"),
+    el("span", "", " — ko‘rish yoki Excel'ga yuklash"),
+  );
+  det.append(sum);
+
+  const acts = el("div", "acts");
+  const btn = el("button", "btn2", "Ro‘yxatni Excel'ga yuklash");
+  btn.type = "button";
+  btn.onclick = async () => {
+    btn.disabled = true;
+    try {
+      const rows = [
+        ["№", "F.I.Sh. (1-Excel)", "Holat"],
+        ...missing.map((name, i) => [i + 1, name, "2-Excel'da topilmadi"]),
+      ];
+      await save(
+        btn,
+        $("xlMsg"),
+        "Lavozimi_topilmagan_xodimlar.xlsx",
+        await xlsxBuild([
+          { name: "Topilmaganlar", rows, head: 1, freeze: true, filter: true, widths: [6, 38, 24] },
+        ]),
+      );
+    } finally {
+      btn.disabled = false;
+    }
+  };
+  acts.append(btn);
+  det.append(acts);
+
+  const ul = el("div", "xlnewlist");
+  for (let i = 0; i < missing.length; i++) {
+    ul.append(el("div", "", `${i + 1}. ${missing[i]}`));
+  }
+  det.append(ul);
+  box.append(det);
+}
+
 function dualRefreshSourceInfo() {
   const node = $("xlJobInfo");
   if (!node) return;
@@ -351,6 +401,7 @@ function dualRefreshSourceInfo() {
     node.textContent = employee
       ? "1-Excel yuklandi. Endi lavozim va bo‘limlar olinadigan ikkinchi Excel faylini tanlang."
       : "2-Excel: lavozim va bo‘limlar shu fayldan olinadi. «ходимлар рўйхати», «асосий» va «профессор-ўқитувчилар» varaqlari tekshiriladi.";
+    dualRenderMissingPositions([]);
     return;
   }
 
@@ -366,6 +417,7 @@ function dualRefreshSourceInfo() {
       ? ". Xodimlar bilan moslashtirildi: " + (xl.sources.matchedPositions || 0) +
         " ta; lavozim topilmadi: " + missing.length + " ta."
       : ". Xodimlar Excel fayli bilan birlashtirish kutilmoqda.");
+  dualRenderMissingPositions(missing);
 }
 
 function dualSetWaitingState() {
