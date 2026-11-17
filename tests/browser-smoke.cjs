@@ -215,11 +215,17 @@ async function main() {
       { timeout: 30000 },
     );
 
-    const details = page.locator("#xlD");
-    if (!(await details.getAttribute("open"))) {
-      await details.locator("summary").click();
-    }
+    // Excel panel is moved into its own hidden view during app initialization.
+    await page.locator('button[data-view="excel"]').click();
+    await page.waitForFunction(
+      () => {
+        const panel = document.querySelector("#xl");
+        return !!panel && panel.getClientRects().length > 0;
+      },
+      { timeout: 15000 },
+    );
 
+    assert.equal(await page.locator("#xlD").getAttribute("open"), "", "Excel panel opens by default");
     assert.equal(await page.locator("#xlFile").count(), 1, "employees Excel input exists");
     assert.equal(await page.locator("#xlJobFile").count(), 1, "positions Excel input exists");
     assert.equal(await page.locator("#xlJobPick").isVisible(), true, "second Excel control is visible");
