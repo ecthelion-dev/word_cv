@@ -6974,13 +6974,25 @@ const SCI_DEG = [
     ["kix", "Katta ilmiy xodim"],
     ["oth", "Boshqa unvon"],
   ],
-  sciNone = (e) =>
-    isEmptyV(e) ||
-    /^(?:йўқ|йук|yo[‘'’`ʻ]?q|нет|не имеет|mavjud emas|мавжуд эмас|-+|—)$/i.test(
-      String(e)
-        .trim()
-        .replace(/[.\s]+$/, ""),
+  sciNone = (e) => {
+    if (isEmptyV(e)) return !0;
+    const t = SpravkaCore.cyrToLat(String(e || ""))
+      .toLowerCase()
+      .replace(/\s+/g, " ")
+      .trim()
+      .replace(/[.\s]+$/, "");
+    return (
+      /^(?:yo[‘'’`ʻ]?q|yuq|net|ne imeet|mavjud emas|no|-+|—)(?:[\s,(]|$)/i.test(
+        t,
+      ) ||
+      /ilmiy\s+(?:daraja|unvon)\S*\s+(?:yo[‘'’`ʻ]?q|ega\s+emas|mavjud\s+emas)/i.test(
+        t,
+      ) ||
+      /^(?:mustaqil\s+(?:izlanuvchi|tadqiqotchi)|doktorant|tadqiqotchi|izlanuvchi)$/i.test(
+        t,
+      )
     );
+  };
 function sciDeg(e) {
   if (sciNone(e)) return null;
   const t = SpravkaCore.cyrToLat(String(e)).toLowerCase();
@@ -7039,6 +7051,23 @@ function sciGrp(e, t) {
 const EXT_RE =
     /ташқи\s*ўриндош|ташки\s*уриндош|tashqi\s*o['‘’`ʻ]?rindosh|внешн\S*\s*совмест/i,
   rowExt = (e) => (e || []).some((e) => EXT_RE.test(String(e || "")));
+function posDept(e) {
+  let t = String(e || "")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (!t) return "";
+  if ("function" == typeof orgOf) {
+    const e = orgOf(t);
+    e &&
+      t.toLowerCase().startsWith(e.toLowerCase()) &&
+      t.length > e.length &&
+      (t = t.slice(e.length).trim());
+  }
+  const a = t.match(
+    /^(.+?\s+(?:кафедраси|кафедра|факультети|факултети|бўлими|булими|бошқармаси|маркази|олий\s+мактаби|kafedrasi|kafedra|fakulteti|bo['‘’`ʻ]?limi|boshqarmasi|markazi))(?:\s|$)/i,
+  );
+  return a ? a[1].trim() : "";
+}
 let sciExtN = 0;
 function sciRows() {
   const e = (e, t) =>
@@ -7115,7 +7144,7 @@ function sciRows() {
       pos: (l.P.position || (s && e(s, "position")) || "").replace(/\s+/g, " "),
       poss: [l.P.position, s ? e(s, "position") : ""],
       cat: s ? e(s, "staff_cat") : "",
-      dept: deptOf(l) || (s ? e(s, "dept") : ""),
+      dept: deptOf(l) || (s ? e(s, "dept") : "") || posDept(l.P.position || (s && e(s, "position")) || ""),
       deg: r,
       tit: d,
       docDeg,
@@ -7144,7 +7173,7 @@ function sciRows() {
           c && c !== m.pos && !m.extra.includes(c) && m.extra.push(c),
           m.poss.push(c),
           m.cat || (m.cat = e(t, "staff_cat")),
-          m.dept || (m.dept = e(t, "dept")),
+          m.dept || (m.dept = e(t, "dept") || posDept(c || m.pos)),
           m.pos || (m.pos = c),
           (m.issues = m.issues || []),
           !sciNone(m.docDeg) &&
