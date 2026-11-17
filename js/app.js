@@ -4529,6 +4529,11 @@ const spellScore = (e) =>
   (SpravkaCore.latToCyr(String(e || "")).match(/[ЎўҒғҚқҲҳЁёЭэЪъ]/g) || [])
     .length;
 function pickBestWords(e, t, a) {
+  if (String(t || "").includes("\n"))
+    return String(t)
+      .split("\n")
+      .map((t) => pickBestWords(e, t, a))
+      .join("\n");
   const n = cleanVal(e, a),
     i = cleanVal(t, a);
   if (!n || !i) return i || n;
