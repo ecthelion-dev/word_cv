@@ -3763,8 +3763,7 @@ function startWatch() {
     }, 4e3)));
 }
 FSA &&
-  (($("xlLink").hidden = !1),
-  $("xlLink").addEventListener("click", async () => {
+  ($("xlLink").addEventListener("click", async () => {
     try {
       const [e] = await window.showOpenFilePicker({
         types: [
