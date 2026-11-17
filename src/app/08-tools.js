@@ -1600,4 +1600,58 @@ let fillT;
         t.disabled = !1;
       }
     }
-  }));
+  }),
+  $("fillXlsx") &&
+    $("fillXlsx").addEventListener("click", async () => {
+      const e = $("fillXlsx");
+      e.disabled = !0;
+      try {
+        const t = [
+          [
+            "№",
+            "F.I.Sh.",
+            "Rasm",
+            "Bo'sh maydonlar",
+            "Tekshiruv ogohlantirishlari",
+            "Fayl nomi",
+          ],
+        ];
+        let a = 0;
+        for (const e of items) {
+          if (!e.P || e.excluded) continue;
+          const n = !e.P.photo,
+            i = [];
+          for (const t of FILL_REQ)
+            isEmptyV(e.P.fields[t]) && i.push((e.P.S && e.P.S.labels[t]) || t);
+          const o = reviewReasons(e.P, e) || [];
+          (n || i.length || o.length) &&
+            t.push([
+              ++a,
+              e.P.name || "",
+              n ? "Yo'q" : "Bor",
+              i.join(", "),
+              o.map((e) => (e && e.t) || e).join("; "),
+              e.name || "",
+            ]);
+        }
+        a
+          ? await save(
+              e,
+              $("fillNote"),
+              "Muammoli_malumotnomalar.xlsx",
+              await xlsxBuild([
+                {
+                  name: "Muammolilar",
+                  rows: t,
+                  head: 1,
+                  freeze: !0,
+                  filter: !0,
+                  widths: [6, 30, 10, 32, 48, 30],
+                },
+              ]),
+            )
+          : toast("Hamma ma'lumotnomalar to'liq ✓");
+      } finally {
+        e.disabled = !1;
+      }
+    }));

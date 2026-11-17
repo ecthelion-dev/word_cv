@@ -1,0 +1,9 @@
+{
+  "name": "Ma'lumotnoma tuzatgich",
+  "short_name": "Ma'lumotnoma",
+  "description": "Kadrlar bo'limi uchun obyektivka (ma'lumotnoma) tahlil va Excel bilan solishtirish tizimi",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#f6f7f5",
+  "theme_color": "#0f5c4d"
+}

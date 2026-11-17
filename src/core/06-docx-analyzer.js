@@ -524,7 +524,7 @@
       })(t, o.S.latin, w),
     )),
       (o.position = $(o.position, o.S.latin, w)));
-    for (const t of ["birth_place", "grad_year"])
+    for (const t of ["birth_place", "grad_year", "specialty", "degree", "title"])
       o.fields[t] = $(o.fields[t], o.S.latin, w);
     for (const t of o.relatives)
       for (const e of ["birth", "work", "address"])

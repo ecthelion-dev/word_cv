@@ -3270,6 +3270,8 @@ function zipAll() {
         const a = new JSZip(),
           c = new Set();
         let p = 0;
+        t.className = "msg";
+        t.textContent = `Tayyorlanmoqda: 0 / ${d.length}`;
         for (const e of d) {
           const r = i && isGone(e),
             m =
@@ -3298,17 +3300,19 @@ function zipAll() {
           for (const t of n)
             (c.add((u + h + "." + t).toLowerCase()),
               a.file(u + h + "." + t, await buildOut(e.P, t)));
-          ++p % (n.includes("pdf") ? 5 : 20) == 0 &&
+          ++p % (n.includes("pdf") ? 1 : 5) == 0 &&
             ((t.className = "msg"),
             (t.textContent = `Tayyorlanmoqda: ${p} / ${d.length}`),
             await new Promise((e) => setTimeout(e, 0)));
         }
         (r && a.file("hisobot.csv", rowsToCsv(reportCsv())),
-          (t.textContent = "ZIP yig'ilmoqda…"));
-        const m = await a.generateAsync({
-          type: "uint8array",
-          compression: "STORE",
-        });
+          (t.textContent = "ZIP yig'ilmoqda: 0%"));
+        const m = await a.generateAsync(
+          { type: "uint8array", compression: "STORE" },
+          (e) => {
+            t.textContent = `ZIP yig'ilmoqda: ${Math.round(e.percent || 0)}%`;
+          },
+        );
         (await save(e, $("bNote"), "malumotnomalar.zip", m))
           ? ((unsaved = !1),
             $("dl").close(),

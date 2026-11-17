@@ -3,6 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0f5c4d">
+<link rel="manifest" href="manifest.json">
 <link rel="icon" href="data:,">
 <title>Ma'lumotnoma tuzatgich</title>
 <link rel="stylesheet" href="css/fonts.css?v=a7797cf389">
@@ -205,6 +207,7 @@
         <div class="box"><div id="xlMap" hidden></div><div class="acts" id="xlActs" hidden>
           <button type="button" class="btn" id="xlRun">Solishtirish</button>
           <button type="button" class="btn2" id="xlApplyAll" hidden>Barcha o'zgarishlarni qo'llash</button>
+          <button type="button" class="btn2" id="xlMissXlsx" hidden>Topilmagan / taxminiylar (.xlsx)</button>
         </div></div>
         <p class="msg" id="xlMsg"></p>
         <div id="xlConf" class="xlconf" hidden></div>
@@ -217,7 +220,10 @@
     <section class="view" id="vFill" hidden>
       <div class="vhead">
         <h1>Bo'sh maydonlar<small>Topilmagan ma'lumotlarni bitta jadvalda to'ldiring — yozganingiz darhol saqlanadi</small></h1>
-        <button type="button" class="btn2" id="fillForms" title="Bo'sh joylari chiziq bilan chiqqan varaqlar: chop etib, xodimlarga to'ldirishga beriladi">Xodimlarga to'ldirish varaqlari (ZIP)</button>
+        <div class="acts">
+          <button type="button" class="btn2" id="fillXlsx" title="Rasm yo'q, maydoni bo'sh yoki kamchiligi bor xodimlar ro'yxati">Muammolilar ro'yxati (.xlsx)</button>
+          <button type="button" class="btn2" id="fillForms" title="Bo'sh joylari chiziq bilan chiqqan varaqlar: chop etib, xodimlarga to'ldirishga beriladi">Xodimlarga to'ldirish varaqlari (ZIP)</button>
+        </div>
       </div>
       <div class="card">
         <div class="tbar">
@@ -505,12 +511,13 @@
   </div>
 </dialog>
 <script src="vendor/jszip.min.js"></script>
-<script src="js/core.js?v=lead-edu-7"></script>
+<script src="js/core.js?v=lead-edu-8"></script>
 <script src="js/coi-engine.js?v=coi-shared-2"></script>
 <script src="js/science-engine.js?v=sci-rank-1"></script>
 <script src="js/pdf-engine.js?v=pdf-worker-1"></script>
 <script src="js/file-error.js?v=pdf-error-1"></script>
 <script src="js/scanned-pdf-ocr.js?v=scan-ocr-1"></script>
-<script src="js/app.js?v=lead-edu-7"></script>
+<script src="js/app.js?v=lead-edu-8"></script>
+<script>"serviceWorker" in navigator && location.protocol !== "file:" && navigator.serviceWorker.register("sw.js").catch(() => {});</script>
 </body>
 </html>

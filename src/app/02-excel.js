@@ -1812,13 +1812,86 @@ function runCompare() {
         },
       ],
     ]),
+    ($("xlMissXlsx") &&
+      ($("xlMissXlsx").hidden = !(p || m || xl.unmatched.length)),
     updApply(),
     (confLim = 100),
     renderConf(),
     store.saveXl(),
     drawNew(),
-    updateStats());
+    updateStats()));
 }
+$("xlMissXlsx") &&
+  $("xlMissXlsx").addEventListener("click", async () => {
+    const e = $("xlMissXlsx");
+    e.disabled = !0;
+    try {
+      const t = [
+        [
+          "№",
+          "Holat",
+          "Obyektivka F.I.Sh.",
+          "Excel F.I.Sh.",
+          "Lavozim / Bo'lim",
+          "Fayl nomi",
+        ],
+      ];
+      let a = 0;
+      for (const e of items)
+        e.P &&
+          !e.excluded &&
+          "notfound" === e.xlStatus &&
+          t.push([
+            ++a,
+            "Excel'da topilmadi",
+            e.P.name || "",
+            "",
+            e.P.position || "",
+            e.name || "",
+          ]);
+      for (const e of items)
+        e.P &&
+          !e.excluded &&
+          e.xlFuzzy &&
+          void 0 !== e.xlRow &&
+          t.push([
+            ++a,
+            "Ism taxminan mos (fuzzy)",
+            e.P.name || "",
+            rowName(xl.rows[e.xlRow]),
+            e.P.position || "",
+            e.name || "",
+          ]);
+      for (const e of xl.unmatched || []) {
+        const n = xl.rows[e] || [];
+        t.push([
+          ++a,
+          "Ma'lumotnomasi yo'q (faqat Excel'da)",
+          "",
+          rowName(n),
+          void 0 !== xl.map.position ? String(n[xl.map.position] || "") : "",
+          "",
+        ]);
+      }
+      await save(
+        e,
+        $("xlMsg"),
+        "Excel_topilmagan_va_taxminiylar.xlsx",
+        await xlsxBuild([
+          {
+            name: "Hisobot",
+            rows: t,
+            head: 1,
+            freeze: !0,
+            filter: !0,
+            widths: [6, 30, 30, 30, 34, 30],
+          },
+        ]),
+      );
+    } finally {
+      e.disabled = !1;
+    }
+  });
 function xlSum(e) {
   let t = $("xlSum");
   (t || ((t = el("div", "xlsum")), (t.id = "xlSum"), $("xlMsg").before(t)),

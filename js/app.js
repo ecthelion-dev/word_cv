@@ -3277,6 +3277,8 @@ function zipAll() {
         const a = new JSZip(),
           c = new Set();
         let p = 0;
+        t.className = "msg";
+        t.textContent = `Tayyorlanmoqda: 0 / ${d.length}`;
         for (const e of d) {
           const r = i && isGone(e),
             m =
@@ -3305,17 +3307,19 @@ function zipAll() {
           for (const t of n)
             (c.add((u + h + "." + t).toLowerCase()),
               a.file(u + h + "." + t, await buildOut(e.P, t)));
-          ++p % (n.includes("pdf") ? 5 : 20) == 0 &&
+          ++p % (n.includes("pdf") ? 1 : 5) == 0 &&
             ((t.className = "msg"),
             (t.textContent = `Tayyorlanmoqda: ${p} / ${d.length}`),
             await new Promise((e) => setTimeout(e, 0)));
         }
         (r && a.file("hisobot.csv", rowsToCsv(reportCsv())),
-          (t.textContent = "ZIP yig'ilmoqda…"));
-        const m = await a.generateAsync({
-          type: "uint8array",
-          compression: "STORE",
-        });
+          (t.textContent = "ZIP yig'ilmoqda: 0%"));
+        const m = await a.generateAsync(
+          { type: "uint8array", compression: "STORE" },
+          (e) => {
+            t.textContent = `ZIP yig'ilmoqda: ${Math.round(e.percent || 0)}%`;
+          },
+        );
         (await save(e, $("bNote"), "malumotnomalar.zip", m))
           ? ((unsaved = !1),
             $("dl").close(),
@@ -5148,13 +5152,86 @@ function runCompare() {
         },
       ],
     ]),
+    ($("xlMissXlsx") &&
+      ($("xlMissXlsx").hidden = !(p || m || xl.unmatched.length)),
     updApply(),
     (confLim = 100),
     renderConf(),
     store.saveXl(),
     drawNew(),
-    updateStats());
+    updateStats()));
 }
+$("xlMissXlsx") &&
+  $("xlMissXlsx").addEventListener("click", async () => {
+    const e = $("xlMissXlsx");
+    e.disabled = !0;
+    try {
+      const t = [
+        [
+          "№",
+          "Holat",
+          "Obyektivka F.I.Sh.",
+          "Excel F.I.Sh.",
+          "Lavozim / Bo'lim",
+          "Fayl nomi",
+        ],
+      ];
+      let a = 0;
+      for (const e of items)
+        e.P &&
+          !e.excluded &&
+          "notfound" === e.xlStatus &&
+          t.push([
+            ++a,
+            "Excel'da topilmadi",
+            e.P.name || "",
+            "",
+            e.P.position || "",
+            e.name || "",
+          ]);
+      for (const e of items)
+        e.P &&
+          !e.excluded &&
+          e.xlFuzzy &&
+          void 0 !== e.xlRow &&
+          t.push([
+            ++a,
+            "Ism taxminan mos (fuzzy)",
+            e.P.name || "",
+            rowName(xl.rows[e.xlRow]),
+            e.P.position || "",
+            e.name || "",
+          ]);
+      for (const e of xl.unmatched || []) {
+        const n = xl.rows[e] || [];
+        t.push([
+          ++a,
+          "Ma'lumotnomasi yo'q (faqat Excel'da)",
+          "",
+          rowName(n),
+          void 0 !== xl.map.position ? String(n[xl.map.position] || "") : "",
+          "",
+        ]);
+      }
+      await save(
+        e,
+        $("xlMsg"),
+        "Excel_topilmagan_va_taxminiylar.xlsx",
+        await xlsxBuild([
+          {
+            name: "Hisobot",
+            rows: t,
+            head: 1,
+            freeze: !0,
+            filter: !0,
+            widths: [6, 30, 30, 30, 34, 30],
+          },
+        ]),
+      );
+    } finally {
+      e.disabled = !1;
+    }
+  });
 function xlSum(e) {
   let t = $("xlSum");
   (t || ((t = el("div", "xlsum")), (t.id = "xlSum"), $("xlMsg").before(t)),
@@ -12154,7 +12231,61 @@ let fillT;
         t.disabled = !1;
       }
     }
-  }));
+  }),
+  $("fillXlsx") &&
+    $("fillXlsx").addEventListener("click", async () => {
+      const e = $("fillXlsx");
+      e.disabled = !0;
+      try {
+        const t = [
+          [
+            "№",
+            "F.I.Sh.",
+            "Rasm",
+            "Bo'sh maydonlar",
+            "Tekshiruv ogohlantirishlari",
+            "Fayl nomi",
+          ],
+        ];
+        let a = 0;
+        for (const e of items) {
+          if (!e.P || e.excluded) continue;
+          const n = !e.P.photo,
+            i = [];
+          for (const t of FILL_REQ)
+            isEmptyV(e.P.fields[t]) && i.push((e.P.S && e.P.S.labels[t]) || t);
+          const o = reviewReasons(e.P, e) || [];
+          (n || i.length || o.length) &&
+            t.push([
+              ++a,
+              e.P.name || "",
+              n ? "Yo'q" : "Bor",
+              i.join(", "),
+              o.map((e) => (e && e.t) || e).join("; "),
+              e.name || "",
+            ]);
+        }
+        a
+          ? await save(
+              e,
+              $("fillNote"),
+              "Muammoli_malumotnomalar.xlsx",
+              await xlsxBuild([
+                {
+                  name: "Muammolilar",
+                  rows: t,
+                  head: 1,
+                  freeze: !0,
+                  filter: !0,
+                  widths: [6, 30, 10, 32, 48, 30],
+                },
+              ]),
+            )
+          : toast("Hamma ma'lumotnomalar to'liq ✓");
+      } finally {
+        e.disabled = !1;
+      }
+    }));
 
 // ============================================================================
 // MODULE: src/app/09-reports.js
