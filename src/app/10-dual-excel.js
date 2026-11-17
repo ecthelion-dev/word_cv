@@ -170,25 +170,81 @@ function dualEmployeeGroups(source) {
   });
 }
 
-function dualFindPosition(name, records) {
-  let best = null;
-  const targetLoose = nameLoose(name);
-  const targetParts = SpravkaCore.nameParts(name);
-
+function dualBuildPositionIndex(records) {
+  const exact = new Map();
+  const buckets = new Map();
+  const items = [];
   for (const record of records || []) {
-    const candidateLoose = nameLoose(record.name);
-    const score =
-      targetLoose && targetLoose === candidateLoose
-        ? 1
-        : SpravkaCore.nameScore(targetParts, SpravkaCore.nameParts(record.name));
-    if (score < 0.86) continue;
+    const loose = nameLoose(record.name);
+    const parts = SpravkaCore.nameParts(record.name);
+    const entry = { record, loose, parts };
+    items.push(entry);
+    if (loose) {
+      let list = exact.get(loose);
+      if (!list) {
+        list = [];
+        exact.set(loose, list);
+      }
+      list.push(record);
+    }
+    const ch1 = parts.sur && parts.sur[0];
+    if (ch1) {
+      let list = buckets.get(ch1);
+      if (!list) {
+        list = [];
+        buckets.set(ch1, list);
+      }
+      list.push(entry);
+    }
+    const ch2 = parts.giv && parts.giv[0];
+    if (ch2 && ch2 !== ch1) {
+      let list = buckets.get(ch2);
+      if (!list) {
+        list = [];
+        buckets.set(ch2, list);
+      }
+      list.push(entry);
+    }
+  }
+  return { exact, buckets, items };
+}
 
+function dualFindPosition(name, indexOrRecords) {
+  const index = Array.isArray(indexOrRecords)
+    ? dualBuildPositionIndex(indexOrRecords)
+    : indexOrRecords;
+  if (!index) return null;
+
+  const targetLoose = nameLoose(name);
+  const exactMatches = targetLoose ? index.exact.get(targetLoose) : null;
+  if (exactMatches && exactMatches.length) {
+    return exactMatches.reduce((best, rec) =>
+      rec.priority > best.priority ? rec : best,
+    );
+  }
+
+  let best = null;
+  const targetParts = SpravkaCore.nameParts(name);
+  const pool =
+    targetParts.sur
+      ? new Set([
+          ...(index.buckets.get(targetParts.sur[0]) || []),
+          ...(targetParts.giv && targetParts.giv[0]
+            ? index.buckets.get(targetParts.giv[0]) || []
+            : []),
+        ])
+      : index.items;
+
+  for (const entry of pool) {
+    const score = SpravkaCore.nameScore(targetParts, entry.parts);
+    if (score < 0.86) continue;
     if (
       !best ||
       score > best.score + 0.005 ||
-      (Math.abs(score - best.score) <= 0.005 && record.priority > best.record.priority)
+      (Math.abs(score - best.score) <= 0.005 &&
+        entry.record.priority > best.record.priority)
     ) {
-      best = { record, score };
+      best = { record: entry.record, score };
     }
   }
   return best ? best.record : null;
@@ -219,6 +275,7 @@ function dualBuildMergedRows() {
   headers[orgIndex] = "Tashkilot (ikkinchi Excel)";
 
   const missing = [];
+  const positionIndexObj = dualBuildPositionIndex(positions.records);
   const mergedRows = groups.map((group) => {
     const row = group.row.slice();
     while (row.length <= orgIndex) row.push("");
@@ -230,7 +287,7 @@ function dualBuildMergedRows() {
       row[employeeMap.rate] = group.rate;
     }
 
-    const match = dualFindPosition(group.name, positions.records);
+    const match = dualFindPosition(group.name, positionIndexObj);
     row[positionIndex] = match ? match.position : "";
     row[deptIndex] = match ? match.dept : "";
     row[orgIndex] = match ? match.org : "";

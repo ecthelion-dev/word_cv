@@ -1635,13 +1635,31 @@ function runCompare() {
       void ($("xlMsg").textContent =
         "F.I.Sh. ustunini tanlang — xodimlar shu bo'yicha topiladi.")
     );
-  const e = xl.rows.map((e) => SpravkaCore.nameParts(rowName(e))),
+  const e = xl.rows.map((e) => {
+      const t = rowName(e);
+      return {
+        parts: SpravkaCore.nameParts(t),
+        norm: SpravkaCore.norm(t),
+      };
+    }),
     t = [],
     a = items.filter((e) => e.P && !e.fromExcel),
-    n = new Map();
-  xl.rows.forEach((e, t) => {
-    const a = SpravkaCore.norm(rowName(e));
-    a && !n.has(a) && n.set(a, t);
+    n = new Map(),
+    dupN = new Map(),
+    byCh = new Map();
+  e.forEach((e, t) => {
+    e.norm &&
+      (n.has(e.norm) ? dupN.set(e.norm, (dupN.get(e.norm) || 1) + 1) : n.set(e.norm, t));
+    const a = e.parts.sur && e.parts.sur[0];
+    if (a) {
+      let n = byCh.get(a);
+      (n || ((n = []), byCh.set(a, n)), n.push(t));
+    }
+    const i = e.parts.giv && e.parts.giv[0];
+    if (i && i !== a) {
+      let e = byCh.get(i);
+      (e || ((e = []), byCh.set(i, e)), e.push(t));
+    }
   });
   for (const i of a) {
     if (void 0 === i.xlManual && i.xlManualName) {
@@ -1657,22 +1675,24 @@ function runCompare() {
         i.P.name ||
         i.P.relHeadingName ||
         ((i.file && i.file.name) || "").replace(/\.[^.]+$/, ""),
-      l = SpravkaCore.nameParts(o);
-    l.sur &&
-      e.forEach((e, n) => {
-        if (!e.sur) return;
-        const o = (e) => e[0];
-        if (
-          o(l.sur) !== o(e.sur) &&
-          o(l.sur) !== o(e.giv || " ") &&
-          o(l.giv || " ") !== o(e.sur)
-        )
-          return;
-        const s = SpravkaCore.nameScore(l, e);
-        !(s >= 0.86) ||
-          (a.size && a.has(SpravkaCore.norm(rowName(xl.rows[n])))) ||
-          t.push([s, i, n]);
-      });
+      r = SpravkaCore.norm(o),
+      d = r ? n.get(r) : void 0;
+    if (void 0 !== d && !dupN.has(r) && !(a.size && a.has(r))) {
+      t.push([1, i, d]);
+      continue;
+    }
+    const l = SpravkaCore.nameParts(o);
+    if (!l.sur) continue;
+    const p = new Set([
+      ...(byCh.get(l.sur[0]) || []),
+      ...(l.giv && l.giv[0] ? byCh.get(l.giv[0]) || [] : []),
+    ]);
+    for (const n of p) {
+      const i = e[n];
+      if (!i.parts.sur) continue;
+      const o = SpravkaCore.nameScore(l, i.parts);
+      !(o >= 0.86) || (a.size && a.has(i.norm)) || t.push([o, i, n]);
+    }
   }
   t.sort((e, t) => t[0] - e[0]);
   const i = new Set(

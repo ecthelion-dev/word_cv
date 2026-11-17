@@ -999,16 +999,46 @@ function isHeadRow(e) {
     t.every((e) => !/\d{4}/.test(e))
   );
 }
-function findDoc(e) {
-  const t = SpravkaCore.nameParts(e);
-  if (!t.sur) return null;
-  let a = null;
-  for (const e of items) {
-    if (!e.P || e.excluded || !e.P.name) continue;
-    const n = SpravkaCore.nameScore(t, SpravkaCore.nameParts(e.P.name));
-    n >= 0.9 && (!a || n > a[0]) && (a = [n, e]);
+function buildDocIndex() {
+  const e = new Map(),
+    t = new Map();
+  for (const a of items) {
+    if (!a.P || a.excluded || !a.P.name) continue;
+    const n = SpravkaCore.norm(a.P.name);
+    n && !e.has(n) && e.set(n, a);
+    const i = SpravkaCore.nameParts(a.P.name);
+    if (!i.sur) continue;
+    const o = { it: a, parts: i },
+      l = i.sur[0];
+    if (l) {
+      let e = t.get(l);
+      (e || ((e = []), t.set(l, e)), e.push(o));
+    }
+    const s = i.giv && i.giv[0];
+    if (s && s !== l) {
+      let e = t.get(s);
+      (e || ((e = []), t.set(s, e)), e.push(o));
+    }
   }
-  return a ? a[1] : null;
+  return { exact: e, buckets: t };
+}
+function findDoc(e, t) {
+  const a = t || buildDocIndex(),
+    n = SpravkaCore.norm(e),
+    i = n ? a.exact.get(n) : null;
+  if (i) return i;
+  const o = SpravkaCore.nameParts(e);
+  if (!o.sur) return null;
+  const l = new Set([
+    ...(a.buckets.get(o.sur[0]) || []),
+    ...(o.giv && o.giv[0] ? a.buckets.get(o.giv[0]) || [] : []),
+  ]);
+  let s = null;
+  for (const e of l) {
+    const t = SpravkaCore.nameScore(o, e.parts);
+    t >= 0.9 && (!s || t > s[0]) && (s = [t, e.it]);
+  }
+  return s ? s[1] : null;
 }
 function cleanLeadName(e) {
   let t = toCyr(String(e || ""))
@@ -1146,23 +1176,31 @@ function leadRec(e) {
 function leadInit() {
   const e = leadSource(),
     t = [];
-  if (e)
-    e.rows.forEach((a, n) => {
-      const i = (t) =>
-          void 0 !== e.map[t] ? String(a[e.map[t]] || "").trim() : "",
-        o = (
-          i("name") ||
-          [i("surname"), i("first"), i("patr")].filter(Boolean).join(" ")
+  if (e) {
+    const a = buildDocIndex();
+    e.rows.forEach((n, i) => {
+      const o = (t) =>
+          void 0 !== e.map[t] ? String(n[e.map[t]] || "").trim() : "",
+        l = (
+          o("name") ||
+          [o("surname"), o("first"), o("patr")].filter(Boolean).join(" ")
         ).trim();
-      if (!o) return;
-      if (e.cat && !e.cat(a, n)) return;
-      if (isHeadRow(a)) return;
-      if (isCenterSubDeptHead(i("position"), i("dept"))) return;
-      const l = leadRankRow(i("position"), i("dept"));
-      ("main" !== e.kind || e.cat || l) &&
-        t.push({ row: a, src: e, idx: n, rk: l || 9, it: findDoc(o), on: !0 });
+      if (!l) return;
+      if (e.cat && !e.cat(n, i)) return;
+      if (isHeadRow(n)) return;
+      if (isCenterSubDeptHead(o("position"), o("dept"))) return;
+      const s = leadRankRow(o("position"), o("dept"));
+      ("main" !== e.kind || e.cat || s) &&
+        t.push({
+          row: n,
+          src: e,
+          idx: i,
+          rk: s || 9,
+          it: findDoc(l, a),
+          on: !0,
+        });
     });
-  else
+  } else
     for (const e of items) {
       if (!e.P || e.excluded || !(e.P.name || "").trim()) continue;
       const a = leadRank(e.P.position || "");

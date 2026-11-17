@@ -4971,13 +4971,31 @@ function runCompare() {
       void ($("xlMsg").textContent =
         "F.I.Sh. ustunini tanlang — xodimlar shu bo'yicha topiladi.")
     );
-  const e = xl.rows.map((e) => SpravkaCore.nameParts(rowName(e))),
+  const e = xl.rows.map((e) => {
+      const t = rowName(e);
+      return {
+        parts: SpravkaCore.nameParts(t),
+        norm: SpravkaCore.norm(t),
+      };
+    }),
     t = [],
     a = items.filter((e) => e.P && !e.fromExcel),
-    n = new Map();
-  xl.rows.forEach((e, t) => {
-    const a = SpravkaCore.norm(rowName(e));
-    a && !n.has(a) && n.set(a, t);
+    n = new Map(),
+    dupN = new Map(),
+    byCh = new Map();
+  e.forEach((e, t) => {
+    e.norm &&
+      (n.has(e.norm) ? dupN.set(e.norm, (dupN.get(e.norm) || 1) + 1) : n.set(e.norm, t));
+    const a = e.parts.sur && e.parts.sur[0];
+    if (a) {
+      let n = byCh.get(a);
+      (n || ((n = []), byCh.set(a, n)), n.push(t));
+    }
+    const i = e.parts.giv && e.parts.giv[0];
+    if (i && i !== a) {
+      let e = byCh.get(i);
+      (e || ((e = []), byCh.set(i, e)), e.push(t));
+    }
   });
   for (const i of a) {
     if (void 0 === i.xlManual && i.xlManualName) {
@@ -4993,22 +5011,24 @@ function runCompare() {
         i.P.name ||
         i.P.relHeadingName ||
         ((i.file && i.file.name) || "").replace(/\.[^.]+$/, ""),
-      l = SpravkaCore.nameParts(o);
-    l.sur &&
-      e.forEach((e, n) => {
-        if (!e.sur) return;
-        const o = (e) => e[0];
-        if (
-          o(l.sur) !== o(e.sur) &&
-          o(l.sur) !== o(e.giv || " ") &&
-          o(l.giv || " ") !== o(e.sur)
-        )
-          return;
-        const s = SpravkaCore.nameScore(l, e);
-        !(s >= 0.86) ||
-          (a.size && a.has(SpravkaCore.norm(rowName(xl.rows[n])))) ||
-          t.push([s, i, n]);
-      });
+      r = SpravkaCore.norm(o),
+      d = r ? n.get(r) : void 0;
+    if (void 0 !== d && !dupN.has(r) && !(a.size && a.has(r))) {
+      t.push([1, i, d]);
+      continue;
+    }
+    const l = SpravkaCore.nameParts(o);
+    if (!l.sur) continue;
+    const p = new Set([
+      ...(byCh.get(l.sur[0]) || []),
+      ...(l.giv && l.giv[0] ? byCh.get(l.giv[0]) || [] : []),
+    ]);
+    for (const n of p) {
+      const i = e[n];
+      if (!i.parts.sur) continue;
+      const o = SpravkaCore.nameScore(l, i.parts);
+      !(o >= 0.86) || (a.size && a.has(i.norm)) || t.push([o, i, n]);
+    }
   }
   t.sort((e, t) => t[0] - e[0]);
   const i = new Set(
@@ -13140,16 +13160,46 @@ function isHeadRow(e) {
     t.every((e) => !/\d{4}/.test(e))
   );
 }
-function findDoc(e) {
-  const t = SpravkaCore.nameParts(e);
-  if (!t.sur) return null;
-  let a = null;
-  for (const e of items) {
-    if (!e.P || e.excluded || !e.P.name) continue;
-    const n = SpravkaCore.nameScore(t, SpravkaCore.nameParts(e.P.name));
-    n >= 0.9 && (!a || n > a[0]) && (a = [n, e]);
+function buildDocIndex() {
+  const e = new Map(),
+    t = new Map();
+  for (const a of items) {
+    if (!a.P || a.excluded || !a.P.name) continue;
+    const n = SpravkaCore.norm(a.P.name);
+    n && !e.has(n) && e.set(n, a);
+    const i = SpravkaCore.nameParts(a.P.name);
+    if (!i.sur) continue;
+    const o = { it: a, parts: i },
+      l = i.sur[0];
+    if (l) {
+      let e = t.get(l);
+      (e || ((e = []), t.set(l, e)), e.push(o));
+    }
+    const s = i.giv && i.giv[0];
+    if (s && s !== l) {
+      let e = t.get(s);
+      (e || ((e = []), t.set(s, e)), e.push(o));
+    }
   }
-  return a ? a[1] : null;
+  return { exact: e, buckets: t };
+}
+function findDoc(e, t) {
+  const a = t || buildDocIndex(),
+    n = SpravkaCore.norm(e),
+    i = n ? a.exact.get(n) : null;
+  if (i) return i;
+  const o = SpravkaCore.nameParts(e);
+  if (!o.sur) return null;
+  const l = new Set([
+    ...(a.buckets.get(o.sur[0]) || []),
+    ...(o.giv && o.giv[0] ? a.buckets.get(o.giv[0]) || [] : []),
+  ]);
+  let s = null;
+  for (const e of l) {
+    const t = SpravkaCore.nameScore(o, e.parts);
+    t >= 0.9 && (!s || t > s[0]) && (s = [t, e.it]);
+  }
+  return s ? s[1] : null;
 }
 function cleanLeadName(e) {
   let t = toCyr(String(e || ""))
@@ -13287,23 +13337,31 @@ function leadRec(e) {
 function leadInit() {
   const e = leadSource(),
     t = [];
-  if (e)
-    e.rows.forEach((a, n) => {
-      const i = (t) =>
-          void 0 !== e.map[t] ? String(a[e.map[t]] || "").trim() : "",
-        o = (
-          i("name") ||
-          [i("surname"), i("first"), i("patr")].filter(Boolean).join(" ")
+  if (e) {
+    const a = buildDocIndex();
+    e.rows.forEach((n, i) => {
+      const o = (t) =>
+          void 0 !== e.map[t] ? String(n[e.map[t]] || "").trim() : "",
+        l = (
+          o("name") ||
+          [o("surname"), o("first"), o("patr")].filter(Boolean).join(" ")
         ).trim();
-      if (!o) return;
-      if (e.cat && !e.cat(a, n)) return;
-      if (isHeadRow(a)) return;
-      if (isCenterSubDeptHead(i("position"), i("dept"))) return;
-      const l = leadRankRow(i("position"), i("dept"));
-      ("main" !== e.kind || e.cat || l) &&
-        t.push({ row: a, src: e, idx: n, rk: l || 9, it: findDoc(o), on: !0 });
+      if (!l) return;
+      if (e.cat && !e.cat(n, i)) return;
+      if (isHeadRow(n)) return;
+      if (isCenterSubDeptHead(o("position"), o("dept"))) return;
+      const s = leadRankRow(o("position"), o("dept"));
+      ("main" !== e.kind || e.cat || s) &&
+        t.push({
+          row: n,
+          src: e,
+          idx: i,
+          rk: s || 9,
+          it: findDoc(l, a),
+          on: !0,
+        });
     });
-  else
+  } else
     for (const e of items) {
       if (!e.P || e.excluded || !(e.P.name || "").trim()) continue;
       const a = leadRank(e.P.position || "");
@@ -14195,25 +14253,81 @@ function dualEmployeeGroups(source) {
   });
 }
 
-function dualFindPosition(name, records) {
-  let best = null;
-  const targetLoose = nameLoose(name);
-  const targetParts = SpravkaCore.nameParts(name);
-
+function dualBuildPositionIndex(records) {
+  const exact = new Map();
+  const buckets = new Map();
+  const items = [];
   for (const record of records || []) {
-    const candidateLoose = nameLoose(record.name);
-    const score =
-      targetLoose && targetLoose === candidateLoose
-        ? 1
-        : SpravkaCore.nameScore(targetParts, SpravkaCore.nameParts(record.name));
-    if (score < 0.86) continue;
+    const loose = nameLoose(record.name);
+    const parts = SpravkaCore.nameParts(record.name);
+    const entry = { record, loose, parts };
+    items.push(entry);
+    if (loose) {
+      let list = exact.get(loose);
+      if (!list) {
+        list = [];
+        exact.set(loose, list);
+      }
+      list.push(record);
+    }
+    const ch1 = parts.sur && parts.sur[0];
+    if (ch1) {
+      let list = buckets.get(ch1);
+      if (!list) {
+        list = [];
+        buckets.set(ch1, list);
+      }
+      list.push(entry);
+    }
+    const ch2 = parts.giv && parts.giv[0];
+    if (ch2 && ch2 !== ch1) {
+      let list = buckets.get(ch2);
+      if (!list) {
+        list = [];
+        buckets.set(ch2, list);
+      }
+      list.push(entry);
+    }
+  }
+  return { exact, buckets, items };
+}
 
+function dualFindPosition(name, indexOrRecords) {
+  const index = Array.isArray(indexOrRecords)
+    ? dualBuildPositionIndex(indexOrRecords)
+    : indexOrRecords;
+  if (!index) return null;
+
+  const targetLoose = nameLoose(name);
+  const exactMatches = targetLoose ? index.exact.get(targetLoose) : null;
+  if (exactMatches && exactMatches.length) {
+    return exactMatches.reduce((best, rec) =>
+      rec.priority > best.priority ? rec : best,
+    );
+  }
+
+  let best = null;
+  const targetParts = SpravkaCore.nameParts(name);
+  const pool =
+    targetParts.sur
+      ? new Set([
+          ...(index.buckets.get(targetParts.sur[0]) || []),
+          ...(targetParts.giv && targetParts.giv[0]
+            ? index.buckets.get(targetParts.giv[0]) || []
+            : []),
+        ])
+      : index.items;
+
+  for (const entry of pool) {
+    const score = SpravkaCore.nameScore(targetParts, entry.parts);
+    if (score < 0.86) continue;
     if (
       !best ||
       score > best.score + 0.005 ||
-      (Math.abs(score - best.score) <= 0.005 && record.priority > best.record.priority)
+      (Math.abs(score - best.score) <= 0.005 &&
+        entry.record.priority > best.record.priority)
     ) {
-      best = { record, score };
+      best = { record: entry.record, score };
     }
   }
   return best ? best.record : null;
@@ -14244,6 +14358,7 @@ function dualBuildMergedRows() {
   headers[orgIndex] = "Tashkilot (ikkinchi Excel)";
 
   const missing = [];
+  const positionIndexObj = dualBuildPositionIndex(positions.records);
   const mergedRows = groups.map((group) => {
     const row = group.row.slice();
     while (row.length <= orgIndex) row.push("");
@@ -14255,7 +14370,7 @@ function dualBuildMergedRows() {
       row[employeeMap.rate] = group.rate;
     }
 
-    const match = dualFindPosition(group.name, positions.records);
+    const match = dualFindPosition(group.name, positionIndexObj);
     row[positionIndex] = match ? match.position : "";
     row[deptIndex] = match ? match.dept : "";
     row[orgIndex] = match ? match.org : "";
