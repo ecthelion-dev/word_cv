@@ -14031,9 +14031,13 @@ XL_FIELDS.push([
   ["ставка", "stavka", "stavkasi", "ставкаси", "stavka miqdori", "штат бирлиги"],
 ]);
 
-if (!xl.sources || typeof xl.sources !== "object") {
-  xl.sources = { employee: null, positions: null, merged: false };
+function dualEnsureSources() {
+  if (!xl.sources || typeof xl.sources !== "object") {
+    xl.sources = { employee: null, positions: null, merged: false };
+  }
+  return xl.sources;
 }
+dualEnsureSources();
 
 const dualBaseLoadExcel = loadExcel;
 const dualBaseRunCompare = runCompare;
@@ -14282,7 +14286,7 @@ function dualBuildMergedRows() {
 }
 
 function dualReady() {
-  const sources = xl.sources || {};
+  const sources = dualEnsureSources();
   return !!(
     sources.employee && sources.employee.rows && sources.employee.rows.length &&
     sources.positions && sources.positions.records && sources.positions.records.length
@@ -14293,8 +14297,9 @@ function dualRefreshSourceInfo() {
   const node = $("xlJobInfo");
   if (!node) return;
 
-  const employee = xl.sources && xl.sources.employee;
-  const positions = xl.sources && xl.sources.positions;
+  const sources = dualEnsureSources();
+  const employee = sources.employee;
+  const positions = sources.positions;
   if (!positions) {
     node.textContent = employee
       ? "1-Excel yuklandi. Endi lavozim va bo‘limlar olinadigan ikkinchi Excel faylini tanlang."
@@ -14317,11 +14322,12 @@ function dualRefreshSourceInfo() {
 }
 
 function dualSetWaitingState() {
+  const sources = dualEnsureSources();
   const ready = dualReady();
   if ($("xlRun")) $("xlRun").disabled = !ready;
   if (!ready) {
     $("xlMsg").className = "msg";
-    $("xlMsg").textContent = !xl.sources.employee
+    $("xlMsg").textContent = !sources.employee
       ? "Avval 1-Excel — employees.xlsx faylini yuklang (stavka va ishga qabul qilingan sana uchun)."
       : "Endi 2-Excel — lavozimlar va bo‘limlar bazasini yuklang.";
   }
@@ -14329,17 +14335,23 @@ function dualSetWaitingState() {
 }
 
 loadExcel = async function (file, options) {
-  const result = await dualBaseLoadExcel(file, options);
+  xl._dualLoading = true;
+  let result;
+  try {
+    result = await dualBaseLoadExcel(file, options);
+  } finally {
+    xl._dualLoading = false;
+  }
   if (!file) return result;
 
-  xl.sources = xl.sources || { employee: null, positions: null, merged: false };
-  xl.sources.employee = {
+  const sources = dualEnsureSources();
+  sources.employee = {
     rows: xl.rows.map((row) => row.slice()),
     headers: xl.headers.slice(),
     map: { ...xl.map },
     fileName: file.name || "employees.xlsx",
   };
-  xl.sources.merged = false;
+  sources.merged = false;
 
   // Never keep the employee export's position column as the authoritative one.
   delete xl.map.position;
@@ -14357,11 +14369,13 @@ loadExcel = async function (file, options) {
 };
 
 runCompare = function () {
+  if (xl._dualLoading) return;
+  const sources = dualEnsureSources();
   if (!dualReady()) {
     dualSetWaitingState();
     return;
   }
-  if (!xl.sources.merged) dualBuildMergedRows();
+  if (!sources.merged) dualBuildMergedRows();
   return dualBaseRunCompare();
 };
 
@@ -14409,13 +14423,13 @@ $("xlJobFile").addEventListener("change", async () => {
   try {
     const sheets = await readXlsx(await file.arrayBuffer());
     const parsed = dualReadPositionWorkbook(sheets);
-    xl.sources = xl.sources || { employee: null, positions: null, merged: false };
-    xl.sources.positions = {
+    const sources = dualEnsureSources();
+    sources.positions = {
       records: parsed.records,
       selectedSheets: parsed.selectedSheets,
       fileName: file.name,
     };
-    xl.sources.merged = false;
+    sources.merged = false;
 
     if (dualReady()) {
       dualBuildMergedRows();
@@ -14442,8 +14456,9 @@ xlWipe = async function (showToast) {
 
 store.restore = async function (...args) {
   const result = await dualBaseRestore.apply(this, args);
+  const sources = dualEnsureSources();
   if (dualReady()) {
-    if (!xl.sources.merged) dualBuildMergedRows();
+    if (!sources.merged) dualBuildMergedRows();
     $("xlRun").disabled = false;
     dualRefreshSourceInfo();
   } else {
