@@ -67,12 +67,13 @@ function dualMapHeaders(headers) {
 function dualReadPositionWorkbook(sheets) {
   const candidates = (sheets || [])
     .map((sheet) => ({ sheet, priority: dualSheetPriority(sheet.name) }))
-    .filter((item) => item.priority > 0)
     .sort((a, b) => b.priority - a.priority);
 
   const records = [];
   const selectedSheets = [];
+  const hasPriority = candidates.some((item) => item.priority > 0);
   for (const candidate of candidates) {
+    if (hasPriority && candidate.priority === 0 && records.length) break;
     const picked = pickHeader([candidate.sheet]);
     if (!picked || picked.hits < 3) continue;
 
@@ -313,12 +314,13 @@ function dualRefreshSourceInfo() {
 function dualSetWaitingState() {
   const sources = dualEnsureSources();
   const ready = dualReady();
-  if ($("xlRun")) $("xlRun").disabled = !ready;
+  const singleReady = !!(xl.rows && xl.rows.length);
+  if ($("xlRun")) $("xlRun").disabled = !(ready || singleReady);
   if (!ready) {
     $("xlMsg").className = "msg";
     $("xlMsg").textContent = !sources.employee
       ? "Avval 1-Excel — employees.xlsx faylini yuklang (stavka va ishga qabul qilingan sana uchun)."
-      : "Endi 2-Excel — lavozimlar va bo‘limlar bazasini yuklang.";
+      : "1-Excel yuklandi. Ikkinchi lavozimlar Excel'ini ham yuklashingiz yoki mavjud ustunlar bilan «Solishtirish»ni bosishingiz mumkin.";
   }
   dualRefreshSourceInfo();
 }
@@ -342,10 +344,6 @@ loadExcel = async function (file, options) {
   };
   sources.merged = false;
 
-  // Never keep the employee export's position column as the authoritative one.
-  delete xl.map.position;
-  delete xl.map.dept;
-  delete xl.map.org;
   if (dualReady()) {
     dualBuildMergedRows();
     dualBaseRunCompare();
@@ -360,12 +358,14 @@ loadExcel = async function (file, options) {
 runCompare = function () {
   if (xl._dualLoading) return;
   const sources = dualEnsureSources();
-  if (!dualReady()) {
-    dualSetWaitingState();
-    return;
+  if (dualReady()) {
+    if (!sources.merged) dualBuildMergedRows();
+    return dualBaseRunCompare();
   }
-  if (!sources.merged) dualBuildMergedRows();
-  return dualBaseRunCompare();
+  if (xl.rows && xl.rows.length) {
+    return dualBaseRunCompare();
+  }
+  dualSetWaitingState();
 };
 
 const dualBaseDiffRow = diffRow;
