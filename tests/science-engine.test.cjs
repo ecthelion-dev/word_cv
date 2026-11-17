@@ -154,3 +154,13 @@ test('quality summary separates missing fields from unclassified values and sour
     { unknownDegree: false, unknownTitle: false, sourceConflict: false, needsReview: false }
   );
 });
+
+test('groups departments with and without trailing kafedra/kafedrasi together', () => {
+  const result = ScienceEngine.departmentRanking([
+    { grp: 'ped', dept: 'Мактабгача таълим', dk: 'phd' },
+    { grp: 'ped', dept: 'Мактабгача таълим кафедраси', dk: null },
+  ], core);
+  assert.equal(result.departmentCount, 1);
+  assert.equal(result.departments[0].staff, 2);
+  assert.equal(result.departments[0].degreeHolders, 1);
+});

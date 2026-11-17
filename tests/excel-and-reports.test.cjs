@@ -235,3 +235,20 @@ test("dualReadPositionWorkbook supports priority sheets and fallback generic she
   const found = app.dualFindPosition("Каримов Салим", idx);
   assert.equal(found && found.dept, "Математика кафедраси");
 });
+
+test("sciNone and posDept accurately classify none-phrases and extract department from position", () => {
+  assert.equal(app.sciNone("йўқ (мустақил тадқиқотчи)"), true);
+  assert.equal(app.sciNone("илмий даражаси йўқ"), true);
+  assert.equal(app.sciNone("Илмий даражага ега эмас"), true);
+  assert.equal(app.sciNone("Мустақил изланувчи"), true);
+  assert.equal(app.sciNone("Педагогика фанлари бўйича фалсафа доктори (PhD)"), false);
+
+  assert.equal(
+    app.posDept("Термиз давлат педагогика институти Педагогика кафедраси доценти"),
+    "Педагогика кафедраси",
+  );
+  assert.equal(
+    app.posDept("Бошланғич таълим кафедраси ўқитувчиси"),
+    "Бошланғич таълим кафедраси",
+  );
+});

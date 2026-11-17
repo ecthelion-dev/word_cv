@@ -56,11 +56,8 @@
   function departmentKey(value, core) {
     let text = String(value == null ? "" : value).trim();
     if (core && typeof core.cyrToLat === "function") text = core.cyrToLat(text);
-    return normalize(text, core)
-      .replace(/[^\p{L}\p{N}]+/gu, " ")
-      .replace(/\s+/g, " ")
-      .replace(/\s+kafedrasi?$/i, "")
-      .trim();
+    text = text.replace(/\s+(?:kafedrasi?|кафедраси?)$/iu, "").trim();
+    return normalize(text, core).replace(/[^\p{L}\p{N}]+/gu, " ").replace(/\s+/g, " ").trim();
   }
 
   /**

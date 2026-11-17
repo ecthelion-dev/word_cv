@@ -12,26 +12,26 @@ const SCI_DEG = [
     ["dots", "Dotsent"],
     ["kix", "Katta ilmiy xodim"],
     ["oth", "Boshqa unvon"],
-  ],
-  sciNone = (e) => {
-    if (isEmptyV(e)) return !0;
-    const t = SpravkaCore.cyrToLat(String(e || ""))
-      .toLowerCase()
-      .replace(/\s+/g, " ")
-      .trim()
-      .replace(/[.\s]+$/, "");
-    return (
-      /^(?:yo[‘'’`ʻ]?q|yuq|net|ne imeet|mavjud emas|no|-+|—)(?:[\s,(]|$)/i.test(
-        t,
-      ) ||
-      /ilmiy\s+(?:daraja|unvon)\S*\s+(?:yo[‘'’`ʻ]?q|ega\s+emas|mavjud\s+emas)/i.test(
-        t,
-      ) ||
-      /^(?:mustaqil\s+(?:izlanuvchi|tadqiqotchi)|doktorant|tadqiqotchi|izlanuvchi)$/i.test(
-        t,
-      )
-    );
-  };
+  ];
+function sciNone(e) {
+  if (isEmptyV(e)) return !0;
+  const t = SpravkaCore.cyrToLat(String(e || ""))
+    .toLowerCase()
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(/[.\s]+$/, "");
+  return (
+    /^(?:yo[‘'’`ʻ]?q|yuq|net|ne imeet|mavjud emas|no|-+|—)(?:[\s,(]|$)/i.test(
+      t,
+    ) ||
+    /ilmiy\s+(?:daraja|unvon)\S*\s+(?:yo[‘'’`ʻ]?q|y?ega\s+emas|mavjud\s+emas)/i.test(
+      t,
+    ) ||
+    /^(?:mustaqil\s+(?:izlanuvchi|tadqiqotchi)|doktorant|tadqiqotchi|izlanuvchi)$/i.test(
+      t,
+    )
+  );
+}
 function sciDeg(e) {
   if (sciNone(e)) return null;
   const t = SpravkaCore.cyrToLat(String(e)).toLowerCase();

@@ -440,11 +440,23 @@ async function runCoiInner() {
         P2(L1, L2, "Ака-ука/опа-сингил (bilvosita)", !0);
         P2(L2, L1, "Ака-ука/опа-сингил (bilvosita)", !0);
       } else if ("parent|parent" === k2) {
+        const inLaw = (r) =>
+            /қайнота|қайнона|каинота|каинона|qaynota|qaynona|турмуш\s*ўртоғининг\s*(?:ота|она)/i.test(
+              String(r || ""),
+            ),
+          il1 = inLaw(L1.rel),
+          il2 = inLaw(L2.rel),
+          lbl =
+            il1 && il2
+              ? "Божа/овсин (umumiy qaynota-qaynona — bilvosita)"
+              : il1 || il2
+                ? "Қайни/куёв/келин (bilvosita)"
+                : "Ака-ука/опа-сингил (umumiy ota-ona — bilvosita)";
+        P2(L1, L2, lbl, !(il1 && il2));
+        P2(L2, L1, lbl, !(il1 && il2));
+      } else if ("child|child" === k2) {
         P2(L1, L2, "Турмуш ўртоғи (umumiy фарзанд — bilvosita)", !0);
         P2(L2, L1, "Турмуш ўртоғи (umumiy фарзанд — bilvosita)", !0);
-      } else if ("child|child" === k2) {
-        P2(L1, L2, "Ака-ука/опа-сингил (umumiy ota-ona — bilvosita)", !0);
-        P2(L2, L1, "Ака-ука/опа-сингил (umumiy ota-ona — bilvosita)", !0);
       } else if ("child|parent" === k2) {
         const paS = "parent" === t1 ? L1 : L2,
           chS = "parent" === t1 ? L2 : L1,
@@ -488,8 +500,10 @@ async function runCoiInner() {
             B1 = ir.to;
           if (!A1 || !B1 || A1.by === B1.by || sameEmployee(A1.by, B1.by))
             continue;
-          const kk = "bilvosita|" + coiKey(A1.by.P.name, B1.by.P.name);
+          const pairKey = coiKey(A1.by.P.name, B1.by.P.name),
+            kk = "bilvosita|" + pairKey;
           if (
+            p.has(pairKey) ||
             seenI.has(kk) ||
             c.some(
               (e2) =>
@@ -497,7 +511,7 @@ async function runCoiInner() {
                 SpravkaCore.nameScore(
                   SpravkaCore.nameParts(e2.relName),
                   SpravkaCore.nameParts(B1.by.P.name),
-                ) >= 0.97,
+                ) >= 0.9,
             )
           )
             continue;
