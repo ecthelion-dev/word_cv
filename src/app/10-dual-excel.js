@@ -343,6 +343,7 @@ function dualBuildMergedRows() {
   }
 
   const missing = [];
+  const matchedPosKeys = new Set();
   const positionIndexObj = dualBuildPositionIndex(positions.records);
   const mergedRows = groups.map((group) => {
     const row = group.row.slice();
@@ -356,6 +357,17 @@ function dualBuildMergedRows() {
     }
 
     const match = dualFindPosition(group.name, positionIndexObj);
+    if (match) {
+      const mk = nameLoose(match.name) || SpravkaCore.norm(match.name);
+      if (mk) matchedPosKeys.add(mk);
+      if (
+        employeeMap.name !== undefined &&
+        match.name &&
+        spellScore(match.name) > spellScore(group.name)
+      ) {
+        row[employeeMap.name] = match.name;
+      }
+    }
     row[positionIndex] = match ? match.position : "";
     row[deptIndex] = match ? match.dept : "";
     row[orgIndex] = match ? match.org : "";
@@ -368,6 +380,36 @@ function dualBuildMergedRows() {
     if (!match) missing.push(group.name);
     return row;
   });
+
+  // Also include employees present in 2-Excel who were not in 1-Excel so they
+  // are never falsely marked as "Excel'da yo'q".
+  const extraPosGroups = new Map();
+  for (const rec of positions.records) {
+    const mk = nameLoose(rec.name) || SpravkaCore.norm(rec.name);
+    if (!mk || matchedPosKeys.has(mk)) continue;
+    if (!extraPosGroups.has(mk)) extraPosGroups.set(mk, []);
+    extraPosGroups.get(mk).push(rec);
+  }
+  for (const list of extraPosGroups.values()) {
+    const rec = dualMergeMatchingRecords(list);
+    if (!rec) continue;
+    const row = new Array(totalCols).fill("");
+    if (employeeMap.name !== undefined) row[employeeMap.name] = rec.name;
+    if (employeeMap.since_date !== undefined && rec.fields && rec.fields.since_date) {
+      row[employeeMap.since_date] = rec.fields.since_date;
+    }
+    if (employeeMap.rate !== undefined && rec.fields && rec.fields.rate) {
+      row[employeeMap.rate] = rec.fields.rate;
+    }
+    row[positionIndex] = rec.position || "";
+    row[deptIndex] = rec.dept || "";
+    row[orgIndex] = rec.org || "";
+    for (const col of extraCols) {
+      row[col.colIndex] =
+        rec.fields && rec.fields[col.key] ? rec.fields[col.key] : "";
+    }
+    mergedRows.push(row);
+  }
 
   // The employee sheet is authoritative for name/date/rate. Its job title is
   // deliberately replaced with dedicated columns sourced from the second book.

@@ -19,7 +19,7 @@ function niceName(e) {
       /\S/.test(e) && e === e.toUpperCase() && e.length > 1 && /\p{L}/u.test(e)
         ? e
             .toLowerCase()
-            .replace(/(^|[-‘’'ʻ])(\p{L})/gu, (e, t, a) => t + a.toUpperCase())
+            .replace(/(^|-)(\p{L})/gu, (e, t, a) => t + a.toUpperCase())
         : e,
     )
     .join("")

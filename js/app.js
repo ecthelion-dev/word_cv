@@ -4413,7 +4413,10 @@ function cleanPersonName(e) {
     (t = t
       .filter((e) => !/[\d.№]/.test(e) && /[A-Za-zА-Яа-яЁёЎўҚқҒғҲҳ]/.test(e))
       .filter((e) => NAME_PART.test(e) || /^[A-ZА-ЯЁЎҚҒҲ]/.test(e))
-      .filter((e, t, a) => !(a.length > 3 && /^[A-ZА-ЯЁЎҚҒҲ]{1,4}$/.test(e)))));
+      .filter(
+        (e, t, a) =>
+          !(a.length > 3 && !NAME_PART.test(e) && /^[A-ZА-ЯЁЎҚҒҲ]{1,4}$/.test(e)),
+      )));
   const a = t.findIndex((e, t) => t >= 1 && NAME_PATR_END.test(e));
   return (
     a >= 1 && (t = t.slice(0, a + 1)),
@@ -5035,10 +5038,10 @@ function runCompare() {
       ...(l.giv && l.giv[0] ? byCh.get(l.giv[0]) || [] : []),
     ]);
     for (const n of p) {
-      const i = e[n];
-      if (!i.parts.sur) continue;
-      const o = SpravkaCore.nameScore(l, i.parts);
-      !(o >= 0.86) || (a.size && a.has(i.norm)) || t.push([o, i, n]);
+      const s = e[n];
+      if (!s.parts.sur) continue;
+      const o = SpravkaCore.nameScore(l, s.parts);
+      !(o >= 0.86) || (a.size && a.has(s.norm)) || t.push([o, i, n]);
     }
   }
   t.sort((e, t) => t[0] - e[0]);
@@ -10700,7 +10703,7 @@ function niceName(e) {
       /\S/.test(e) && e === e.toUpperCase() && e.length > 1 && /\p{L}/u.test(e)
         ? e
             .toLowerCase()
-            .replace(/(^|[-‘’'ʻ])(\p{L})/gu, (e, t, a) => t + a.toUpperCase())
+            .replace(/(^|-)(\p{L})/gu, (e, t, a) => t + a.toUpperCase())
         : e,
     )
     .join("")
@@ -14741,6 +14744,7 @@ function dualBuildMergedRows() {
   }
 
   const missing = [];
+  const matchedPosKeys = new Set();
   const positionIndexObj = dualBuildPositionIndex(positions.records);
   const mergedRows = groups.map((group) => {
     const row = group.row.slice();
@@ -14754,6 +14758,17 @@ function dualBuildMergedRows() {
     }
 
     const match = dualFindPosition(group.name, positionIndexObj);
+    if (match) {
+      const mk = nameLoose(match.name) || SpravkaCore.norm(match.name);
+      if (mk) matchedPosKeys.add(mk);
+      if (
+        employeeMap.name !== undefined &&
+        match.name &&
+        spellScore(match.name) > spellScore(group.name)
+      ) {
+        row[employeeMap.name] = match.name;
+      }
+    }
     row[positionIndex] = match ? match.position : "";
     row[deptIndex] = match ? match.dept : "";
     row[orgIndex] = match ? match.org : "";
@@ -14766,6 +14781,36 @@ function dualBuildMergedRows() {
     if (!match) missing.push(group.name);
     return row;
   });
+
+  // Also include employees present in 2-Excel who were not in 1-Excel so they
+  // are never falsely marked as "Excel'da yo'q".
+  const extraPosGroups = new Map();
+  for (const rec of positions.records) {
+    const mk = nameLoose(rec.name) || SpravkaCore.norm(rec.name);
+    if (!mk || matchedPosKeys.has(mk)) continue;
+    if (!extraPosGroups.has(mk)) extraPosGroups.set(mk, []);
+    extraPosGroups.get(mk).push(rec);
+  }
+  for (const list of extraPosGroups.values()) {
+    const rec = dualMergeMatchingRecords(list);
+    if (!rec) continue;
+    const row = new Array(totalCols).fill("");
+    if (employeeMap.name !== undefined) row[employeeMap.name] = rec.name;
+    if (employeeMap.since_date !== undefined && rec.fields && rec.fields.since_date) {
+      row[employeeMap.since_date] = rec.fields.since_date;
+    }
+    if (employeeMap.rate !== undefined && rec.fields && rec.fields.rate) {
+      row[employeeMap.rate] = rec.fields.rate;
+    }
+    row[positionIndex] = rec.position || "";
+    row[deptIndex] = rec.dept || "";
+    row[orgIndex] = rec.org || "";
+    for (const col of extraCols) {
+      row[col.colIndex] =
+        rec.fields && rec.fields[col.key] ? rec.fields[col.key] : "";
+    }
+    mergedRows.push(row);
+  }
 
   // The employee sheet is authoritative for name/date/rate. Its job title is
   // deliberately replaced with dedicated columns sourced from the second book.

@@ -453,7 +453,14 @@ test("dualBuildMergedRows: 2-Excel'dagi mutaxassislik va boshqa shaxsiy ustunlar
     specChange.val,
     "Жисмоний тарбия ва спорт машғулотлари назарияси ва методикаси",
   );
+
+  assert.equal(
+    app.cleanPersonName("XUDOYOROVA MARVARID MAHMUD QIZI"),
+    "Xudoyorova Marvarid Mahmud qizi",
+  );
+  assert.equal(app.niceName("YO‘LDOSHEV SHOHRUH"), "Yo‘ldoshev Shohruh");
 });
+
 
 
 

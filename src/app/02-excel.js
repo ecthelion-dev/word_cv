@@ -1073,7 +1073,10 @@ function cleanPersonName(e) {
     (t = t
       .filter((e) => !/[\d.№]/.test(e) && /[A-Za-zА-Яа-яЁёЎўҚқҒғҲҳ]/.test(e))
       .filter((e) => NAME_PART.test(e) || /^[A-ZА-ЯЁЎҚҒҲ]/.test(e))
-      .filter((e, t, a) => !(a.length > 3 && /^[A-ZА-ЯЁЎҚҒҲ]{1,4}$/.test(e)))));
+      .filter(
+        (e, t, a) =>
+          !(a.length > 3 && !NAME_PART.test(e) && /^[A-ZА-ЯЁЎҚҒҲ]{1,4}$/.test(e)),
+      )));
   const a = t.findIndex((e, t) => t >= 1 && NAME_PATR_END.test(e));
   return (
     a >= 1 && (t = t.slice(0, a + 1)),
@@ -1695,10 +1698,10 @@ function runCompare() {
       ...(l.giv && l.giv[0] ? byCh.get(l.giv[0]) || [] : []),
     ]);
     for (const n of p) {
-      const i = e[n];
-      if (!i.parts.sur) continue;
-      const o = SpravkaCore.nameScore(l, i.parts);
-      !(o >= 0.86) || (a.size && a.has(i.norm)) || t.push([o, i, n]);
+      const s = e[n];
+      if (!s.parts.sur) continue;
+      const o = SpravkaCore.nameScore(l, s.parts);
+      !(o >= 0.86) || (a.size && a.has(s.norm)) || t.push([o, i, n]);
     }
   }
   t.sort((e, t) => t[0] - e[0]);
