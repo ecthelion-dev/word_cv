@@ -1541,7 +1541,15 @@ function applyChanges(e, t, a, n) {
       for (let t = i.work.length - 1; t >= 0; t--) {
         const n = i.work[t].match(e);
         if (n) {
+          const o =
+            t > 0
+              ? +(
+                  (i.work[t - 1].match(/^(\d{4})(?:\s*-\s*(\d{4}))?/) || [])[2] ||
+                  0
+                )
+              : 0;
           n[1] === String(a.year) ||
+            (+a.year < o && +n[1] >= o) ||
             (i.position && !SpravkaCore.sameJob(n[3], i.position)) ||
             (i.work[t] = String(a.year) + n[2] + n[3]);
           break;

@@ -252,3 +252,41 @@ test("sciNone and posDept accurately classify none-phrases and extract departmen
     "Бошланғич таълим кафедраси",
   );
 });
+
+test("setCurrentJob: oxirgi yopiq qator joriy lavozim bilan bir xil bo‘lsa, dublikat va xronologik teskari qator qo‘shmasdan uni ҳ.в. ga ochadi", () => {
+  const doc1 = {
+    S: app.SpravkaCore.SCRIPTS.cyr,
+    work: [
+      "2008-2009 йй. - Термиз педагогика коллежида девонхона мудири",
+      "2021-2024 йй. - Термиз давлат педагогика институти Факултетлараро хорижий Тиллар кафедраси кабинет мудираси",
+      "2024-2025 йй. - Термиз давлат педагогика институти ўқув ёрдамчи ходимлар кабинет мудири",
+    ],
+  };
+  app.SpravkaCore.setCurrentJob(
+    doc1,
+    "Термиз давлат педагогика институти ўқув ёрдамчи ходимлар кабинет мудири",
+    "2021",
+  );
+  assert.equal(doc1.work.length, 3);
+  assert.equal(
+    doc1.work[2],
+    "2024-йил. ҳ.в. - Термиз давлат педагогика институти ўқув ёрдамчи ходимлар кабинет мудири",
+  );
+
+  const doc2 = {
+    S: app.SpravkaCore.SCRIPTS.cyr,
+    work: [
+      "2021-2025 йй. - Термиз давлат педагогика институтида тютор",
+      "2025-2026 йй. - Термиз давлат педагогика институти ўқув ёрдамчи ходимлар лаборант",
+    ],
+  };
+  app.SpravkaCore.setCurrentJob(
+    doc2,
+    "Термиз давлат педагогика институти Ўқитишнинг техник воситалари бўлими муҳандис",
+    "2021",
+    { force: true },
+  );
+  assert.equal(doc2.work.length, 3);
+  assert.match(doc2.work[2], /^2026-йил\. ҳ\.в\. - /);
+});
+

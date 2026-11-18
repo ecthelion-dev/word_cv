@@ -514,6 +514,25 @@
           return e && e[1] === n[1] && ae(e[2], n[2]);
         }) && o.work.splice(e, 1);
       }
+      if (o.work.length >= 2) {
+        const e = o.work.length - 1,
+          n = o.work[e].match(
+            /^(\d{4})(\s*-?\s*(?:й\.|y\.|йил\.?|yil\.?)\s*-?\s*(?:ҳ\.в\.|h\.v\.)\s*-\s*)(.*)$/i,
+          ),
+          s = pe(o.work, e);
+        if (n && s && +n[1] < s) {
+          o.work[e] = `${s}${n[2]}${n[3]}`;
+        }
+      }
+      if (o.work.length) {
+        const e = o.work[o.work.length - 1].match(t),
+          n = ((o.since || "").match(/\d{4}/) || [])[0];
+        e &&
+          n &&
+          +n < +e[1] &&
+          o.work.slice(0, -1).some((t) => t.startsWith(n)) &&
+          (o.since = `${e[1]}-${o.S.latin ? "yildan:" : "йилдан:"}`);
+      }
     }
     ((o.work = o.work.map((t) =>
       (function (t, e, n) {

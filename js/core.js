@@ -2614,6 +2614,25 @@
           return e && e[1] === n[1] && ae(e[2], n[2]);
         }) && o.work.splice(e, 1);
       }
+      if (o.work.length >= 2) {
+        const e = o.work.length - 1,
+          n = o.work[e].match(
+            /^(\d{4})(\s*-?\s*(?:й\.|y\.|йил\.?|yil\.?)\s*-?\s*(?:ҳ\.в\.|h\.v\.)\s*-\s*)(.*)$/i,
+          ),
+          s = pe(o.work, e);
+        if (n && s && +n[1] < s) {
+          o.work[e] = `${s}${n[2]}${n[3]}`;
+        }
+      }
+      if (o.work.length) {
+        const e = o.work[o.work.length - 1].match(t),
+          n = ((o.since || "").match(/\d{4}/) || [])[0];
+        e &&
+          n &&
+          +n < +e[1] &&
+          o.work.slice(0, -1).some((t) => t.startsWith(n)) &&
+          (o.since = `${e[1]}-${o.S.latin ? "yildan:" : "йилдан:"}`);
+      }
     }
     ((o.work = o.work.map((t) =>
       (function (t, e, n) {
@@ -4253,6 +4272,16 @@
       ),
     re =
       /^(\d{4})\s*-?\s*(?:й\.|y\.|йил\.?|yil\.?)\s*-?\s*(?:ҳ\.в\.|h\.v\.|х\.в\.|x\.v\.)\s*-\s*(.*)$/i;
+  function pe(t, e) {
+    for (let n = e - 1; n >= 0; n--) {
+      const e = String(t[n] || "");
+      if (/талаба|магистрант|докторант|аспирант|talaba|magistrant|doktorant|aspirant/i.test(e))
+        continue;
+      const s = e.match(/^(\d{4})(?:\s*-\s*(\d{4}))?/);
+      if (s) return +(s[2] || s[1]);
+    }
+    return 0;
+  }
   function le(t, e, n, s) {
     const i = t.S.latin,
       a = i ? "yil." : "йил.",
@@ -4271,37 +4300,52 @@
         break;
       }
     if (l >= 0) {
-      const i = t.work[l].match(re);
+      const i = t.work[l].match(re),
+        c = pe(t.work, l);
       if (ae(i[2], e)) {
-        const s = ie(e).length > ie(i[2]).length;
-        if (oe(i[2]) === oe(e) && (!s || i[1] !== n)) return "exists";
-        if (i[1] === n || +i[1] > +n)
-          return ((t.work[l] = `${i[1]}-${a} ${r} - ${e}`), "updated");
-      } else if (+i[1] > +n)
-        return s && s.force
-          ? (t.work.push(`${n}-${a} ${r} - ${e}`), "older-added")
-          : "older";
+        const s = ie(e).length > ie(i[2]).length,
+          o = String(Math.max(+i[1], c, +n >= c ? +n : 0)),
+          d = s ? e : i[2];
+        return oe(i[2]) === oe(e) && !s && i[1] === o
+          ? "exists"
+          : ((t.work[l] = `${o}-${a} ${r} - ${d}`), "updated");
+      }
+      if (+i[1] > +n) {
+        if (s && s.force) {
+          const n = String(Math.max(+i[1], c));
+          return ((t.work[l] = `${n}-${a} ${r} - ${e}`), "updated");
+        }
+        return "older";
+      }
+      const d = String(Math.max(+n, +i[1]));
       return (
         (t.work[l] =
-          i[1] === n
+          i[1] === d
             ? `${i[1]}-${a.replace(/\.$/, "")} - ${i[2]}`
-            : `${i[1]}-${n} ${o} - ${i[2]}`),
-        t.work.push(`${n}-${a} ${r} - ${e}`),
+            : `${i[1]}-${d} ${o} - ${i[2]}`),
+        t.work.push(`${d}-${a} ${r} - ${e}`),
         "closed"
       );
     }
     const c = (t.work.length ? t.work[t.work.length - 1] : "").match(
       /^(\d{4})\s*-\s*(\d{4})\s*(?:йй\.|yy\.|й\.|y\.)?\s*-\s*(.*)$/,
     );
-    return c && ae(c[3], e) && oe(c[3]) === oe(e) && +n == +c[1]
-      ? ((t.work[t.work.length - 1] =
-          `${c[1]}-${a} ${r} - ${ie(e).length > ie(c[3]).length ? e : c[3]}`),
-        "reopened")
-      : t.work.some(
-            (t) => ae(t, e) && oe(t) === oe(e) && !/^\d{4}\s*-\s*\d{4}/.test(t),
-          )
-        ? "exists"
-        : (t.work.push(`${n}-${a} ${r} - ${e}`), "added");
+    if (c && ae(c[3], e) && oe(c[3]) === oe(e)) {
+      const n = String(Math.max(+c[1], pe(t.work, t.work.length - 1)));
+      return (
+        (t.work[t.work.length - 1] =
+          `${n}-${a} ${r} - ${ie(e).length > ie(c[3]).length ? e : c[3]}`),
+        "reopened"
+      );
+    }
+    if (
+      t.work.some(
+        (t) => ae(t, e) && oe(t) === oe(e) && !/^\d{4}\s*-\s*\d{4}/.test(t),
+      )
+    )
+      return "exists";
+    const d = String(Math.max(+n, pe(t.work, t.work.length)));
+    return (t.work.push(`${d}-${a} ${r} - ${e}`), "added");
   }
   const ce =
     "январ|феврал|март|апрел|май|июн|июл|август|сентябр|сентабр|октябр|ноябр|декабр|yanvar|fevral|mart|aprel|may|iyun|iyul|avgust|sentabr|sentyabr|oktabr|oktyabr|noyabr|dekabr";
