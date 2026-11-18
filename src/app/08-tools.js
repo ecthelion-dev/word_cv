@@ -1350,9 +1350,14 @@ function setK(e, t, a) {
       : (e.fields[t] = a);
 }
 function emptyKeys(e, t, a) {
-  return (t ? CRIT_K.concat(OPT_K) : CRIT_K).filter(
-    (t) => isEmptyV(getK(e, t)) && !(a && xlBlank(a, t)),
-  );
+  const isTech = typeof isTechDept === "function" && isTechDept(a, e);
+  return (t ? CRIT_K.concat(OPT_K) : CRIT_K).filter((k) => {
+    if (!isEmptyV(getK(e, k))) return false;
+    if (isTech && ("grad_year" === k || "specialty" === k || "education" === k)) {
+      return false;
+    }
+    return !(a && xlBlank(a, k));
+  });
 }
 var fillShown = 100;
 function fillRows() {

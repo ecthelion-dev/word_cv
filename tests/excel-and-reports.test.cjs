@@ -516,6 +516,73 @@ test("toggleApproveItem: qatordagi Tasdiqlash tugmasi orqali ma'lumotnomani bir 
   assert.equal(app.sevOf(item), "serious");
 });
 
+test("isTechDept: Texnik foydalanish va xo'jalik bo'limi xodimlarining mutaxassisligi va tugatgan joyi yo'q bo'lsa xatolik berilmaydi", () => {
+  const techP = {
+    name: "Абраева Ўғилбека Аннаназаровна",
+    position: "Техник фойдаланиш ва хўжалик бўлими талабалар турар жойи қоровули",
+    since: "2021-йил",
+    work: ["2021-йил ҳ.в. - Қоровул"],
+    relatives: [{ rel: "Отаси", name: "Аннаназар" }],
+    photo: { bytes: [1] },
+    fields: {
+      birth_date: "1985-02-03",
+      birth_place: "Термиз",
+      nationality: "ўзбек",
+      education: "",
+      grad_year: "",
+      specialty: "",
+    },
+    S: {
+      labels: {
+        birth_date: "Туғилган йили",
+        birth_place: "Туғилган жойи",
+        nationality: "Миллати",
+        education: "Маълумоти",
+        grad_year: "Тамомлаган",
+        specialty: "Маълумоти бўйича мутахассислиги",
+      },
+    },
+  };
+
+  const techItem = {
+    P: techP,
+    name: "Абраева Ўғилбека.doc",
+    folder: "3. Bo'limlar/Техник фойдаланиш ва хўжалик бўлими",
+  };
+
+  assert.equal(app.isTechDept(techItem, techP), true);
+
+  const reasons = app.reviewReasons(techP, techItem);
+  // Texnik foydalanish va xo'jalik bo'limi xodimi uchun Tamomlagan va Mutaxassisligi bo'sh bo'lsa xatolik chiqarilmaydi
+  assert.equal(
+    reasons.some((r) => /Тамомлаган|мутахассислиги|Маълумоти/.test(r)),
+    false,
+  );
+
+  const empty = app.emptyKeys(techP, false, techItem);
+  assert.equal(empty.includes("grad_year"), false);
+  assert.equal(empty.includes("specialty"), false);
+  assert.equal(empty.includes("education"), false);
+
+  // Boshqa kafedra o'qituvchisi uchun esa mutaxassislik bo'sh bo'lsa xatolik chiqishi kerak
+  const teacherP = {
+    ...techP,
+    position: "Термиз давлат педагогика институти Тарих ва география кафедраси ўқитувчиси",
+  };
+  const teacherItem = {
+    P: teacherP,
+    name: "Вахидова Нозикой.doc",
+    folder: "4. Fakultetlar/Tarix kafedrasi",
+  };
+  assert.equal(app.isTechDept(teacherItem, teacherP), false);
+  const teacherReasons = app.reviewReasons(teacherP, teacherItem);
+  assert.equal(
+    teacherReasons.some((r) => /Тамомлаган|мутахассислиги|Маълумоти/.test(r)),
+    true,
+  );
+});
+
+
 
 
 

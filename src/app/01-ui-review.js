@@ -935,8 +935,46 @@ function addItemError(e, t) {
 function resetCard(e) {
   renderCard(e);
 }
+function isTechDept(it, p) {
+  const norm = (s) => (s ? String(s).toLowerCase().replace(/['‘’`ʻ]/g, "'") : "");
+  const hay = [];
+  if (it) {
+    if (it.folder) hay.push(norm(it.folder));
+    if (it.name) hay.push(norm(it.name));
+    if (typeof deptOf === "function") {
+      try {
+        const d = deptOf(it);
+        if (d) hay.push(norm(d));
+      } catch (err) {}
+    }
+    if (it.dept) hay.push(norm(it.dept));
+    if (it.xlRow != null && typeof xl !== "undefined" && xl && xl.rows && xl.rows[it.xlRow]) {
+      const r = xl.rows[it.xlRow];
+      if (xl.map) {
+        if (xl.map.dept && r[xl.map.dept]) hay.push(norm(r[xl.map.dept]));
+        if (xl.map.position && r[xl.map.position]) hay.push(norm(r[xl.map.position]));
+      }
+    }
+  }
+  const P = p || (it && it.P);
+  if (P) {
+    if (P.position) hay.push(norm(P.position));
+    if (P.since) hay.push(norm(P.since));
+  }
+  const combined = hay.join(" ");
+  if (!combined) return false;
+  return (
+    /техник\s+фойдаланиш|texnik\s+foydalan/i.test(combined) ||
+    /х[ўу]жалик\s+б[ўу]лим|xo'?jalik\s+bo'?lim/i.test(combined)
+  );
+}
 function xlBlank(e, t) {
-  if (!e || e.xlFuzzy || null == e.xlRow || !xl.rows || !xl.map) return !1;
+  if (!e) return !1;
+  const isEdu = "grad_year" === t || "specialty" === t || "education" === t;
+  if (isEdu && isTechDept(e, e.P)) {
+    return !0;
+  }
+  if (e.xlFuzzy || null == e.xlRow || !xl.rows || !xl.map) return !1;
   const a = xl.rows[e.xlRow];
   if (!a) return !1;
   const n = (
@@ -954,6 +992,7 @@ function reviewReasons(e, t) {
   const a = [];
   (void 0 === t && (t = items.find((t) => t.P === e)),
     e.name || a.push("F.I.Sh. topilmadi"));
+  const isTech = isTechDept(t, e);
   const n = [
     "birth_date",
     "birth_place",
@@ -962,7 +1001,13 @@ function reviewReasons(e, t) {
     "grad_year",
     "specialty",
   ]
-    .filter((a) => !e.fields[a] && !xlBlank(t, a))
+    .filter((a) => {
+      if (e.fields[a]) return false;
+      if (isTech && (a === "grad_year" || a === "specialty" || a === "education")) {
+        return false;
+      }
+      return !xlBlank(t, a);
+    })
     .map((t) => e.S.labels[t]);
   (n.length && a.push("Bo‘sh: " + n.join(", ")),
     e.since || e.position || a.push("Lavozim satri yo‘q"),
@@ -2743,10 +2788,13 @@ function renderFixed(e) {
   const t = el("div", "page"),
     a = e.S.labels,
     n = realFixes(e).map((e) => e[1]),
+    isTech = isTechDept(e._it || (typeof sel !== "undefined" && sel), e),
     i = (e, t, a, i) => {
       const o = el(t);
       if (a && !/^\?+$/.test(String(a).trim())) markWords(o, a, n, "fx");
-      else {
+      else if (isTech && ("grad_year" === i || "specialty" === i || "education" === i)) {
+        o.append(el("span", "muted", "—"));
+      } else {
         const e = el("mark", "q", i ? "bo'sh — to'ldirish" : "bo'sh");
         (i &&
           ((e.dataset.k = i),
