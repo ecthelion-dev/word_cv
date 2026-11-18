@@ -582,6 +582,58 @@ test("isTechDept: Texnik foydalanish va xo'jalik bo'limi xodimlarining mutaxassi
   );
 });
 
+test("fixDateTypos: 2917 kabi klaviatura xatolarini 2017 ga avtomatik tuzatadi", () => {
+  assert.equal(
+    app.SpravkaCore.fixDateTypos("2016-2917 йй. - Референт"),
+    "2016-2017 йй. - Референт",
+  );
+  assert.equal(
+    app.SpravkaCore.fixDateTypos("2917-2021 йй. - Ўқитувчи"),
+    "2017-2021 йй. - Ўқитувчи",
+  );
+  assert.equal(
+    app.SpravkaCore.fixDateTypos("2920-йилдан"),
+    "2020-йилдан",
+  );
+});
+
+test("dateIssues: oliy ta'limda o'qish (magistratura/doktorantura) bilan birgalikda ishlash va parallel lavozimlar xatolik deb olinmaydi", () => {
+  // 1-holat: 2021-2023 magistratura va 2020-2026 maktab o'qituvchisi
+  const p1 = {
+    since: "2026-йил",
+    fields: { birth_date: "1997-01-01" },
+    work: [
+      "2016-2020 йй. - Республика “Ёшлар маркази” Сурхондарё бўлинмаси АРМ раҳбари",
+      "2021-2023 йй. - Термиз давлат университети Магистратура бўлими: Адабиётшунослик йўналиши магистранти",
+      "2020-2026 йй. - Термиз шаҳар касб-ҳунар мактаби (Термиз шаҳар 1-сон техникуми)да она тили ва адабиёт фани ўқитувчиси",
+      "2026-йил. ҳ.в. - Термиз давлат педагогика институти Ўзбек тили ва адабиёти кафедрасида ўқитувчи",
+    ],
+  };
+
+  const issues1 = app.dateIssues(p1);
+  assert.equal(issues1.some((s) => s.includes("tartib buzilgan")), false);
+  assert.equal(issues1.some((s) => s.includes("kesib o‘tadi")), false);
+
+  // 2-holat: Милиев Сувонқул: 2016-2917 (2017 ga tuzatiladi), 2017-2021, 2021-2025 va 2021-2026 parallel
+  const p2 = {
+    since: "2021-йил",
+    fields: { birth_date: "1960-01-01" },
+    work: [
+      "2016-2917 йй. - Кафедра мудири",
+      "2017-2021 йй. - Кафедра доценти",
+      "2021-2025 йй. - Кафедра мудири",
+      "2021-2026 йй. - Ўзбек тили ва адабиёти кафедраси профессори",
+    ],
+  };
+
+  const issues2 = app.dateIssues(p2);
+  // 2917 -> 2017 ga tuzatilgan bo'lishi kerak
+  assert.equal(p2.work[0], "2016-2017 йй. - Кафедра мудири");
+  assert.equal(issues2.some((s) => s.includes("kelajakdagi yil")), false);
+  assert.equal(issues2.some((s) => s.includes("kesib o‘tadi")), false);
+});
+
+
 
 
 

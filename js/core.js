@@ -178,8 +178,15 @@
       .replace(/([OoGg])[`'’ʻʼ´‘]/g, "$1‘")
       .replace(/([A-Za-z])[`'ʻʼ´](?=[A-Za-z])/g, "$1’");
   }
+  function fixDateTypos(t) {
+    if (!t) return t;
+    return String(t)
+      .replace(/\b29(\d{2})\b/g, "20$1")
+      .replace(/\b28(\d{2})\b/g, "20$1")
+      .replace(/\b10([789]\d)\b/g, "19$1");
+  }
   function h(t) {
-    return String(t || "")
+    return fixDateTypos(String(t || ""))
       .replace(/[\t\n\r\v\u00a0]+/g, " ")
       .replace(/([а-яёўқғҳ]{3,})(?=[А-ЯЁЎҚҒҲ][а-яёўқғҳ])/g, "$1 ")
       .replace(/([a-z‘’]{3,})(?=[A-Z][a-z])/g, "$1 ")
@@ -214,7 +221,7 @@
       : t;
   }
   function d(t, e) {
-    if (((t = h(t)), /^\d{4}-(?:йил|yil) - \S/.test(t))) return t;
+    if (((t = fixDateTypos(h(t))), /^\d{4}-(?:йил|yil) - \S/.test(t))) return t;
     t = (t = (t = t
       .replace(/^\s*\d{1,2}\.(\d{4})/, "$1")
       .replace(/^(\d{4})\s*([-–—])\s*\d{1,2}\.(\d{4})/, "$1-$3"))
@@ -2434,6 +2441,30 @@
       for (const t of Object.keys(o.fields))
         "birth_date" !== t && (o.fields[t] = i(o.fields[t]));
       o.work = o.work.map(i);
+      o.work = o.work.map((t) => {
+        const fixed = fixDateTypos(t);
+        if (fixed !== t) {
+          o.warnings.push(`Sana texnik xatosi tuzatildi: «${t.slice(0, 30)}» → «${fixed.slice(0, 30)}».`);
+          o.fixes.push([t, fixed]);
+        }
+        return fixed;
+      });
+      if (o.since) {
+        const sFixed = fixDateTypos(o.since);
+        if (sFixed !== o.since) {
+          o.fixes.push([o.since, sFixed]);
+          o.since = sFixed;
+        }
+      }
+      for (const t of Object.keys(o.fields)) {
+        if (o.fields[t]) {
+          const fFixed = fixDateTypos(o.fields[t]);
+          if (fFixed !== o.fields[t]) {
+            o.fixes.push([o.fields[t], fFixed]);
+            o.fields[t] = fFixed;
+          }
+        }
+      }
       for (const t of o.relatives)
         for (const e of ["name", "birth", "work", "address"]) t[e] = i(t[e]);
       s &&
@@ -4978,6 +5009,7 @@
       SCRIPTS: O,
       cyrToLat: Gt,
       latToCyr: Vt,
+      fixDateTypos: fixDateTypos,
       fixWorkLine: d,
       tidyWork: h,
       mergeWork: f,

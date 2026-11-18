@@ -1020,25 +1020,68 @@ function reviewReasons(e, t) {
   } catch (e) {}
   return a;
 }
+function fixDateTypos(t) {
+  if (!t) return t;
+  if (typeof SpravkaCore !== "undefined" && typeof SpravkaCore.fixDateTypos === "function") {
+    return SpravkaCore.fixDateTypos(t);
+  }
+  return String(t)
+    .replace(/\b29(\d{2})\b/g, "20$1")
+    .replace(/\b28(\d{2})\b/g, "20$1")
+    .replace(/\b10([789]\d)\b/g, "19$1");
+}
 const STUDY_RE =
-  /талаба|магистр|докторант|аспирант|тингловчи|ўқувчи|ўриндош|ўриндошлик|talaba|magistr|doktorant|aspirant|tinglovchi|o['‘’`ʻ]quvchi|o['‘’`ʻ]rindosh|студент|совмест|ҳарбий хизмат|harbiy xizmat|срочн/i;
+  /талаба|магистр|магистратура|докторант|докторантура|аспирант|аспирантура|изланувчи|тадқиқотчи|стажёр|стажер|ўқувчи|тингловчи|ўриндош|ўриндошлик|ординатор|ординатура|резидент|резидентура|интерн|интернатура|соатбай|ставка|илмий|кабинет|лаборант|ўқитувчи|муаллим|кафедра|talaba|magistr|magistratura|doktorant|doktorantura|aspirant|aspirantura|izlanuvchi|tadqiqotchi|stajyor|stajer|o['‘’`ʻ]quvchi|tinglovchi|o['‘’`ʻ]rindosh|o['‘’`ʻ]rindoshlik|soatbay|stavka|ilmiy|kabinet|laborant|o['‘’`ʻ]qituvchi|muallim|kafedra|студент|совмест|ҳарбий хизмат|harbiy xizmat|срочн/i;
 function dateIssues(e) {
   const t = [],
     a = new Date().getFullYear(),
     n = [];
+  if (e && e.work) {
+    for (let idx = 0; idx < e.work.length; idx++) {
+      const orig = e.work[idx];
+      const fixed = fixDateTypos(orig);
+      if (fixed !== orig) {
+        e.work[idx] = fixed;
+        if (e.fixes) e.fixes.push([orig, fixed]);
+      }
+    }
+  }
+  if (e && e.since) {
+    const sFixed = fixDateTypos(e.since);
+    if (sFixed !== e.since) {
+      if (e.fixes) e.fixes.push([e.since, sFixed]);
+      e.since = sFixed;
+    }
+  }
+  if (e && e.fields) {
+    if (e.fields.grad_year) {
+      const gFixed = fixDateTypos(e.fields.grad_year);
+      if (gFixed !== e.fields.grad_year) {
+        if (e.fixes) e.fixes.push([e.fields.grad_year, gFixed]);
+        e.fields.grad_year = gFixed;
+      }
+    }
+    if (e.fields.birth_date) {
+      const bFixed = fixDateTypos(e.fields.birth_date);
+      if (bFixed !== e.fields.birth_date) {
+        if (e.fixes) e.fixes.push([e.fields.birth_date, bFixed]);
+        e.fields.birth_date = bFixed;
+      }
+    }
+  }
   for (const t of e.work || []) {
-    const e =
+    const m =
       /^\s*(\d{4})\s*(?:-\s*(\d{4}))?\s*(?:йй\.|yy\.|й\.|y\.|-йил\.|-yil\.|йил|yil)?\s*(ҳ\.?\s*в\.?|h\.?\s*v\.?)?/i.exec(
         t,
       );
-    if (!e) continue;
-    const i = +e[1],
-      o = e[2] ? +e[2] : e[3] ? Math.max(a, i) : i,
+    if (!m) continue;
+    const i = +m[1],
+      o = m[2] ? +m[2] : m[3] ? Math.max(a, i) : i,
       l = t.replace(WORK_PFX, "$2");
     n.push({
       a: i,
       b: o,
-      open: !!e[3] && !e[2],
+      open: !!m[3] && !m[2],
       study: STUDY_RE.test(l),
       w: t,
     });
@@ -1054,24 +1097,30 @@ function dateIssues(e) {
   for (let e = 1; e < n.length; e++) {
     const a = n[e - 1],
       o = n[e];
-    o.a < a.a
-      ? t.push(
+    const isParallel =
+      a.study ||
+      o.study ||
+      a.a === o.a ||
+      (o.a >= a.a && o.b <= a.b) ||
+      (a.a >= o.a && a.b <= o.b);
+    if (o.a < a.a) {
+      if (!isParallel) {
+        t.push(
           `Sana: tartib buzilgan — ${i(o)} qatori ${i(a)} dan keyin yozilgan`,
-        )
-      : (!a.open ||
-          o.open ||
-          a.study ||
-          o.study ||
-          t.push(
-            `Sana: ${i(a)} (hozirgacha) dan keyin yana ${i(o)} qatori bor`,
-          ),
-        !a.open &&
-          a.b - o.a >= 2 &&
-          !a.study &&
-          !o.study &&
-          t.push(
-            `Sana: ${i(a)} va ${i(o)} bir-birini ${a.b - o.a} yil kesib o‘tadi`,
-          ));
+        );
+      }
+    } else {
+      if (!(!a.open || o.open || a.study || o.study)) {
+        t.push(
+          `Sana: ${i(a)} (hozirgacha) dan keyin yana ${i(o)} qatori bor`,
+        );
+      }
+      if (!a.open && a.b - o.a >= 2 && !isParallel) {
+        t.push(
+          `Sana: ${i(a)} va ${i(o)} bir-birini ${a.b - o.a} yil kesib o‘tadi`,
+        );
+      }
+    }
   }
   const o = /(\d{4})/.exec(e.since || ""),
     l =

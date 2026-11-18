@@ -713,6 +713,7 @@
       SCRIPTS: O,
       cyrToLat: Gt,
       latToCyr: Vt,
+      fixDateTypos: fixDateTypos,
       fixWorkLine: d,
       tidyWork: h,
       mergeWork: f,

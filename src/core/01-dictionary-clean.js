@@ -168,8 +168,15 @@
       .replace(/([OoGg])[`'’ʻʼ´‘]/g, "$1‘")
       .replace(/([A-Za-z])[`'ʻʼ´](?=[A-Za-z])/g, "$1’");
   }
+  function fixDateTypos(t) {
+    if (!t) return t;
+    return String(t)
+      .replace(/\b29(\d{2})\b/g, "20$1")
+      .replace(/\b28(\d{2})\b/g, "20$1")
+      .replace(/\b10([789]\d)\b/g, "19$1");
+  }
   function h(t) {
-    return String(t || "")
+    return fixDateTypos(String(t || ""))
       .replace(/[\t\n\r\v\u00a0]+/g, " ")
       .replace(/([а-яёўқғҳ]{3,})(?=[А-ЯЁЎҚҒҲ][а-яёўқғҳ])/g, "$1 ")
       .replace(/([a-z‘’]{3,})(?=[A-Z][a-z])/g, "$1 ")
@@ -204,7 +211,7 @@
       : t;
   }
   function d(t, e) {
-    if (((t = h(t)), /^\d{4}-(?:йил|yil) - \S/.test(t))) return t;
+    if (((t = fixDateTypos(h(t))), /^\d{4}-(?:йил|yil) - \S/.test(t))) return t;
     t = (t = (t = t
       .replace(/^\s*\d{1,2}\.(\d{4})/, "$1")
       .replace(/^(\d{4})\s*([-–—])\s*\d{1,2}\.(\d{4})/, "$1-$3"))

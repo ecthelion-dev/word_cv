@@ -272,6 +272,30 @@
       for (const t of Object.keys(o.fields))
         "birth_date" !== t && (o.fields[t] = i(o.fields[t]));
       o.work = o.work.map(i);
+      o.work = o.work.map((t) => {
+        const fixed = fixDateTypos(t);
+        if (fixed !== t) {
+          o.warnings.push(`Sana texnik xatosi tuzatildi: «${t.slice(0, 30)}» → «${fixed.slice(0, 30)}».`);
+          o.fixes.push([t, fixed]);
+        }
+        return fixed;
+      });
+      if (o.since) {
+        const sFixed = fixDateTypos(o.since);
+        if (sFixed !== o.since) {
+          o.fixes.push([o.since, sFixed]);
+          o.since = sFixed;
+        }
+      }
+      for (const t of Object.keys(o.fields)) {
+        if (o.fields[t]) {
+          const fFixed = fixDateTypos(o.fields[t]);
+          if (fFixed !== o.fields[t]) {
+            o.fixes.push([o.fields[t], fFixed]);
+            o.fields[t] = fFixed;
+          }
+        }
+      }
       for (const t of o.relatives)
         for (const e of ["name", "birth", "work", "address"]) t[e] = i(t[e]);
       s &&
