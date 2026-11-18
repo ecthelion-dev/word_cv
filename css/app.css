@@ -57,6 +57,10 @@ button{font-family:inherit}
 .btn2:hover{border-color:var(--accent)}
 .rtable td.acts .ra{display:flex;gap:6px;justify-content:flex-end;flex-wrap:nowrap}
 .rtable td.acts .btn2{white-space:nowrap}
+.btn2.btn-appr{background:var(--ok-bg);border-color:#a8d5be;color:var(--ok);font-weight:600}
+.btn2.btn-appr:hover{background:#d2f0df;border-color:var(--ok)}
+.btn2.btn-appr.is-appr{background:var(--ok);border-color:var(--ok);color:#fff}
+.btn2.btn-appr.is-appr:hover{opacity:.9}
 .btn2.dl{padding:9px 10px}
 .fmtmenu{position:fixed;z-index:60;min-width:250px;background:var(--surface);border:1px solid var(--line);border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,.18);padding:6px}
 .fmtmenu .fmh{font-size:12.5px;color:var(--muted);padding:6px 10px 4px}
@@ -647,7 +651,7 @@ dialog.dlg{max-width:min(680px,calc(100vw - 32px))}
   .rtable tr.item td{display:block;padding:0;border:0;background:none!important;max-width:none}
   .rtable td.c-cb,.rtable td.c-ph{display:none!important}
   .rtable td.c-who{grid-area:who}.rtable td.c-st{grid-area:st}.rtable td.c-iss{grid-area:iss}.rtable td.c-pos{grid-area:pos;color:var(--muted)}.rtable td.acts{grid-area:act;margin-top:6px}
-  .rtable td.acts .ra{display:grid;grid-template-columns:minmax(0,1fr) 48px;gap:8px}
+  .rtable td.acts .ra{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr) 48px;gap:8px}
   .rtable td.acts .btn2{min-height:44px}
   .rtable .empty td{display:block}
   .mbar{display:grid;grid-template-columns:1fr 1fr;gap:8px;position:fixed;left:0;right:0;bottom:0;z-index:40;padding:10px 16px 14px;background:var(--surface);border-top:1px solid var(--line)}

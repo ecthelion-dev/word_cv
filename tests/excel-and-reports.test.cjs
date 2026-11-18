@@ -488,6 +488,35 @@ test("dualBuildMergedRows: 2-Excel'dagi mutaxassislik va boshqa shaxsiy ustunlar
   );
 });
 
+test("toggleApproveItem: qatordagi Tasdiqlash tugmasi orqali ma'lumotnomani bir zumda tasdiqlaydi va holatini ok ga o'tkazadi", () => {
+  const item = {
+    name: "Абраева Ўғилбека Аннаназаровна.doc",
+    P: {
+      name: "Абраева Ўғилбека Аннаназаровна",
+      position: "Техник фойдаланиш ва хўжалик бўлими талабалар турар жойи қоровули",
+      fields: { specialty: "" },
+    },
+    reasons: ["Маълумоти бўйича мутахассислиги: bo'sh — to'ldirish"],
+    state: "warn",
+    approved: false,
+  };
+
+  assert.equal(app.sevOf(item), "serious");
+
+  // Inline Tasdiqlash tugmasi bosilganda
+  app.toggleApproveItem(item);
+  assert.equal(item.approved, true);
+  assert.equal(item.state, "ok");
+  assert.equal(app.sevOf(item), "ok");
+
+  // Qayta bosilganda bekor qilish
+  app.toggleApproveItem(item);
+  assert.equal(item.approved, false);
+  assert.equal(item.state, "warn");
+  assert.equal(app.sevOf(item), "serious");
+});
+
+
 
 
 

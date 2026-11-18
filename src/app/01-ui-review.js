@@ -410,7 +410,14 @@ function applyFilter(e) {
   syncFnow();
   const a = items.filter((e) => e.selected).length,
     n = a ? ` · belgilangan: ${a}` : "",
-    i = t.length || "all" !== rf() || $("fFolder").value || $("fDept").value,
+    aSelBtn = $("apprSel");
+  if (aSelBtn) {
+    const unappr = items.filter((e) => e.selected && e.P && !e.excluded && !e.approved).length;
+    aSelBtn.hidden = !a;
+    aSelBtn.textContent = unappr ? `Belgilanganlarni tasdiqlash (${unappr} ta)` : `Belgilanganlar tasdiqlangan ✓`;
+    aSelBtn.disabled = !unappr;
+  }
+  const i = t.length || "all" !== rf() || $("fFolder").value || $("fDept").value,
     o = [...list.children],
     l = [];
   for (const e of o) {
@@ -2209,6 +2216,8 @@ function xlStatus() {
       }
     applyFilter();
   }));
+const apprSelBtn = $("apprSel");
+apprSelBtn && apprSelBtn.addEventListener("click", () => approveSelectedItems());
 const STATE_TXT = {
     ok: "Tayyor",
     serious: "Jiddiy",
@@ -2234,6 +2243,47 @@ function shortPos(e) {
     );
   return (a ? a[1] : t).slice(0, 70);
 }
+function toggleApproveItem(e) {
+  if (!e || !e.P) return;
+  if (typeof draft !== "undefined" && draft && draft.it === e) {
+    commitDraft();
+    pMode = "fixed";
+  }
+  e.approved = !e.approved;
+  if (e.approved) {
+    e.state = "ok";
+    toast((e.P.name || e.name || "Xodim") + " tasdiqlandi ✓");
+  } else {
+    e.state = (e.reasons && e.reasons.length) ? "warn" : "ok";
+    toast((e.P.name || e.name || "Xodim") + " tasdiqlash bekor qilindi");
+  }
+  unsaved = !0;
+  if (typeof store !== "undefined" && store.dirty) store.dirty.add(e);
+  if (e.li) renderCard(e);
+  updateStats();
+  if (window.sel === e && typeof renderDetail === "function") {
+    renderDetail();
+  }
+}
+
+function approveSelectedItems() {
+  const targets = (items || []).filter((e) => e.selected && e.P && !e.excluded && !e.approved);
+  if (!targets.length) {
+    toast("Tasdiqlash uchun yangi belgilangan ma'lumotnoma yo'q");
+    return;
+  }
+  for (const e of targets) {
+    e.approved = !0;
+    e.state = "ok";
+    if (typeof store !== "undefined" && store.dirty) store.dirty.add(e);
+    if (e.li) renderCard(e);
+  }
+  unsaved = !0;
+  updateStats();
+  toast(`${targets.length} ta ma'lumotnoma tasdiqlandi ✓`);
+  applyFilter();
+}
+
 function renderCard(e) {
   const t = sevOf(e),
     a = e.li;
@@ -2330,6 +2380,21 @@ function renderCard(e) {
       })),
     n)
   ) {
+    const ab = el(
+      "button",
+      "btn2 btn-appr" + (e.approved ? " is-appr" : ""),
+      e.approved ? "✓ Tasdiqlangan" : "Tasdiqlash",
+    );
+    ((ab.type = "button"),
+      (ab.title = e.approved
+        ? "Tasdiqlangan (bekor qilish uchun bosing)"
+        : "Ma'lumotnomani tasdiqlash"),
+      (ab.onclick = (t) => {
+        (t.stopPropagation(), toggleApproveItem(e));
+      }),
+      (ab.onkeydown = (e) => e.stopPropagation()),
+      h.append(ab));
+
     const t = el("button", "btn2 dl");
     ((t.type = "button"),
       (t.title = "Yuklab olish (Word, PDF yoki to‘ldirish varag‘i)"),

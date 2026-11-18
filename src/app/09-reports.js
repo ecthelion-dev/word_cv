@@ -1377,6 +1377,23 @@ function renderLead(e) {
             (selectItem(e.it), showView("review"));
           }),
           m.append(t));
+        if (e.it.P) {
+          const ab = el(
+            "button",
+            "btn2 btn-appr" + (e.it.approved ? " is-appr" : ""),
+            e.it.approved ? "✓ Tasdiqlangan" : "Tasdiqlash",
+          );
+          ((ab.type = "button"),
+            (ab.title = e.it.approved
+              ? "Tasdiqlangan (bekor qilish uchun bosing)"
+              : "Ma'lumotnomani tasdiqlash"),
+            (ab.onclick = (t) => {
+              (t.stopPropagation(),
+                toggleApproveItem(e.it),
+                renderLead());
+            }),
+            m.append(ab));
+        }
       }
       (p.append(m),
         n.append(o, el("td", "n", String(t + 1)), s, r, c, p),
@@ -1877,13 +1894,29 @@ function renderCheck(e) {
         const s = el("td");
         s.append(el("span", "", t.name || ""), el("small", "", t.folder || ""));
         const r = el("td", "acts"),
+          ra = el("div", "ra"),
           d = el("button", "btn2", "Ko'rish");
         ((d.type = "button"),
           (d.onclick = () => {
             (selectItem(t), showView("review"));
           }),
-          r.append(d),
-          a.append(el("td", "n", String(n)), o, l, s, r));
+          ra.append(d));
+        if (t.P) {
+          const ab = el(
+            "button",
+            "btn2 btn-appr" + (t.approved ? " is-appr" : ""),
+            t.approved ? "✓ Tasdiqlangan" : "Tasdiqlash",
+          );
+          ((ab.type = "button"),
+            (ab.title = t.approved
+              ? "Tasdiqlangan (bekor qilish uchun bosing)"
+              : "Ma'lumotnomani tasdiqlash"),
+            (ab.onclick = (e) => {
+              (e.stopPropagation(), toggleApproveItem(t), renderCheck());
+            }),
+            ra.append(ab));
+        }
+        (r.append(ra), a.append(el("td", "n", String(n)), o, l, s, r));
       } else {
         const t = el("td");
         t.append(el("b", "", e.nm));
@@ -1944,6 +1977,24 @@ function renderCheck(e) {
               (selectItem(e.its[0]), showView("review"));
             }),
             r.append(t));
+          const it0 = e.its[0];
+          if (it0 && it0.P) {
+            const ab = el(
+              "button",
+              "btn2 btn-appr" + (it0.approved ? " is-appr" : ""),
+              it0.approved ? "✓ Tasdiqlangan" : "Tasdiqlash",
+            );
+            ((ab.type = "button"),
+              (ab.title = it0.approved
+                ? "Tasdiqlangan (bekor qilish uchun bosing)"
+                : "Ma'lumotnomani tasdiqlash"),
+              (ab.onclick = (e) => {
+                (e.stopPropagation(),
+                  toggleApproveItem(it0),
+                  renderCheck());
+              }),
+              r.append(ab));
+          }
         }
         (s.append(r), a.append(el("td", "n", String(n)), t, o, l, s));
       }

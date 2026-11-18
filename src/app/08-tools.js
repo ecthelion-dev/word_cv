@@ -1521,8 +1521,21 @@ function renderFill(e) {
           } finally {
             d.disabled = !1;
           }
+        }));
+      const ab = el(
+        "button",
+        "btn2 btn-appr" + (e.approved ? " is-appr" : ""),
+        e.approved ? "✓ Tasdiqlangan" : "Tasdiqlash",
+      );
+      ((ab.type = "button"),
+        (ab.title = e.approved
+          ? "Tasdiqlangan (bekor qilish uchun bosing)"
+          : "Ma'lumotnomani tasdiqlash"),
+        (ab.onclick = () => {
+          toggleApproveItem(e);
+          renderFill();
         }),
-        s.append(r, d),
+        s.append(r, ab, d),
         l.append(s),
         n.append(l),
         i.append(n));

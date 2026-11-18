@@ -417,7 +417,14 @@ function applyFilter(e) {
   syncFnow();
   const a = items.filter((e) => e.selected).length,
     n = a ? ` · belgilangan: ${a}` : "",
-    i = t.length || "all" !== rf() || $("fFolder").value || $("fDept").value,
+    aSelBtn = $("apprSel");
+  if (aSelBtn) {
+    const unappr = items.filter((e) => e.selected && e.P && !e.excluded && !e.approved).length;
+    aSelBtn.hidden = !a;
+    aSelBtn.textContent = unappr ? `Belgilanganlarni tasdiqlash (${unappr} ta)` : `Belgilanganlar tasdiqlangan ✓`;
+    aSelBtn.disabled = !unappr;
+  }
+  const i = t.length || "all" !== rf() || $("fFolder").value || $("fDept").value,
     o = [...list.children],
     l = [];
   for (const e of o) {
@@ -2216,6 +2223,8 @@ function xlStatus() {
       }
     applyFilter();
   }));
+const apprSelBtn = $("apprSel");
+apprSelBtn && apprSelBtn.addEventListener("click", () => approveSelectedItems());
 const STATE_TXT = {
     ok: "Tayyor",
     serious: "Jiddiy",
@@ -2241,6 +2250,47 @@ function shortPos(e) {
     );
   return (a ? a[1] : t).slice(0, 70);
 }
+function toggleApproveItem(e) {
+  if (!e || !e.P) return;
+  if (typeof draft !== "undefined" && draft && draft.it === e) {
+    commitDraft();
+    pMode = "fixed";
+  }
+  e.approved = !e.approved;
+  if (e.approved) {
+    e.state = "ok";
+    toast((e.P.name || e.name || "Xodim") + " tasdiqlandi ✓");
+  } else {
+    e.state = (e.reasons && e.reasons.length) ? "warn" : "ok";
+    toast((e.P.name || e.name || "Xodim") + " tasdiqlash bekor qilindi");
+  }
+  unsaved = !0;
+  if (typeof store !== "undefined" && store.dirty) store.dirty.add(e);
+  if (e.li) renderCard(e);
+  updateStats();
+  if (window.sel === e && typeof renderDetail === "function") {
+    renderDetail();
+  }
+}
+
+function approveSelectedItems() {
+  const targets = (items || []).filter((e) => e.selected && e.P && !e.excluded && !e.approved);
+  if (!targets.length) {
+    toast("Tasdiqlash uchun yangi belgilangan ma'lumotnoma yo'q");
+    return;
+  }
+  for (const e of targets) {
+    e.approved = !0;
+    e.state = "ok";
+    if (typeof store !== "undefined" && store.dirty) store.dirty.add(e);
+    if (e.li) renderCard(e);
+  }
+  unsaved = !0;
+  updateStats();
+  toast(`${targets.length} ta ma'lumotnoma tasdiqlandi ✓`);
+  applyFilter();
+}
+
 function renderCard(e) {
   const t = sevOf(e),
     a = e.li;
@@ -2337,6 +2387,21 @@ function renderCard(e) {
       })),
     n)
   ) {
+    const ab = el(
+      "button",
+      "btn2 btn-appr" + (e.approved ? " is-appr" : ""),
+      e.approved ? "✓ Tasdiqlangan" : "Tasdiqlash",
+    );
+    ((ab.type = "button"),
+      (ab.title = e.approved
+        ? "Tasdiqlangan (bekor qilish uchun bosing)"
+        : "Ma'lumotnomani tasdiqlash"),
+      (ab.onclick = (t) => {
+        (t.stopPropagation(), toggleApproveItem(e));
+      }),
+      (ab.onkeydown = (e) => e.stopPropagation()),
+      h.append(ab));
+
     const t = el("button", "btn2 dl");
     ((t.type = "button"),
       (t.title = "Yuklab olish (Word, PDF yoki to‘ldirish varag‘i)"),
@@ -12246,8 +12311,21 @@ function renderFill(e) {
           } finally {
             d.disabled = !1;
           }
+        }));
+      const ab = el(
+        "button",
+        "btn2 btn-appr" + (e.approved ? " is-appr" : ""),
+        e.approved ? "✓ Tasdiqlangan" : "Tasdiqlash",
+      );
+      ((ab.type = "button"),
+        (ab.title = e.approved
+          ? "Tasdiqlangan (bekor qilish uchun bosing)"
+          : "Ma'lumotnomani tasdiqlash"),
+        (ab.onclick = () => {
+          toggleApproveItem(e);
+          renderFill();
         }),
-        s.append(r, d),
+        s.append(r, ab, d),
         l.append(s),
         n.append(l),
         i.append(n));
@@ -13763,6 +13841,23 @@ function renderLead(e) {
             (selectItem(e.it), showView("review"));
           }),
           m.append(t));
+        if (e.it.P) {
+          const ab = el(
+            "button",
+            "btn2 btn-appr" + (e.it.approved ? " is-appr" : ""),
+            e.it.approved ? "✓ Tasdiqlangan" : "Tasdiqlash",
+          );
+          ((ab.type = "button"),
+            (ab.title = e.it.approved
+              ? "Tasdiqlangan (bekor qilish uchun bosing)"
+              : "Ma'lumotnomani tasdiqlash"),
+            (ab.onclick = (t) => {
+              (t.stopPropagation(),
+                toggleApproveItem(e.it),
+                renderLead());
+            }),
+            m.append(ab));
+        }
       }
       (p.append(m),
         n.append(o, el("td", "n", String(t + 1)), s, r, c, p),
@@ -14263,13 +14358,29 @@ function renderCheck(e) {
         const s = el("td");
         s.append(el("span", "", t.name || ""), el("small", "", t.folder || ""));
         const r = el("td", "acts"),
+          ra = el("div", "ra"),
           d = el("button", "btn2", "Ko'rish");
         ((d.type = "button"),
           (d.onclick = () => {
             (selectItem(t), showView("review"));
           }),
-          r.append(d),
-          a.append(el("td", "n", String(n)), o, l, s, r));
+          ra.append(d));
+        if (t.P) {
+          const ab = el(
+            "button",
+            "btn2 btn-appr" + (t.approved ? " is-appr" : ""),
+            t.approved ? "✓ Tasdiqlangan" : "Tasdiqlash",
+          );
+          ((ab.type = "button"),
+            (ab.title = t.approved
+              ? "Tasdiqlangan (bekor qilish uchun bosing)"
+              : "Ma'lumotnomani tasdiqlash"),
+            (ab.onclick = (e) => {
+              (e.stopPropagation(), toggleApproveItem(t), renderCheck());
+            }),
+            ra.append(ab));
+        }
+        (r.append(ra), a.append(el("td", "n", String(n)), o, l, s, r));
       } else {
         const t = el("td");
         t.append(el("b", "", e.nm));
@@ -14330,6 +14441,24 @@ function renderCheck(e) {
               (selectItem(e.its[0]), showView("review"));
             }),
             r.append(t));
+          const it0 = e.its[0];
+          if (it0 && it0.P) {
+            const ab = el(
+              "button",
+              "btn2 btn-appr" + (it0.approved ? " is-appr" : ""),
+              it0.approved ? "✓ Tasdiqlangan" : "Tasdiqlash",
+            );
+            ((ab.type = "button"),
+              (ab.title = it0.approved
+                ? "Tasdiqlangan (bekor qilish uchun bosing)"
+                : "Ma'lumotnomani tasdiqlash"),
+              (ab.onclick = (e) => {
+                (e.stopPropagation(),
+                  toggleApproveItem(it0),
+                  renderCheck());
+              }),
+              r.append(ab));
+          }
         }
         (s.append(r), a.append(el("td", "n", String(n)), t, o, l, s));
       }
