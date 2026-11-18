@@ -20,7 +20,11 @@
       party: ["Партиявийлиги", "Партияга мансублиги"],
       education: ["Маълумоти"],
       grad_year: ["Тамомлаган", "Тамомлаган йили", "Тугатган йили"],
-      specialty: ["Маълумоти бўйича мутахассислиги", "Мутахассислиги"],
+      specialty: [
+        "Маълумоти бўйича мутахассислиги",
+        "Маълумоти мутахассислиги бўйича",
+        "Мутахассислиги",
+      ],
       degree: ["Илмий даражаси"],
       title: ["Илмий унвони"],
       languages: ["Қайси чет тилларини билади", "Чет тилларини билиши"],
@@ -157,10 +161,17 @@
       sdur: "Sirdaryo davlat universiteti",
       surdu: "Surxondaryo davlat universiteti",
       qdu: "Qoraqalpog'iston davlat universiteti",
+      федарацияси: "Федерацияси",
+      ката: "катта",
+      радиокоммуникакатсия: "радиокоммуникация",
     },
     l = "A-Za-zА-Яа-яЁёЎўҚқҒғҲҳ‘’ʻʼ`'";
   function c(t) {
     return t
+      .replace(/О[`'’ʻʼ´‘](?=[А-Яа-яЁёЎўҚқҒғҲҳ])/g, "Ў")
+      .replace(/о[`'’ʻʼ´‘](?=[А-Яа-яЁёЎўҚқҒғҲҳ])/g, "ў")
+      .replace(/Г[`'’ʻʼ´‘](?=[А-Яа-яЁёЎўҚқҒғҲҳ])/g, "Ғ")
+      .replace(/г[`'’ʻʼ´‘](?=[А-Яа-яЁёЎўҚқҒғҲҳ])/g, "ғ")
       .replace(/([OoGg])[`'’ʻʼ´‘]/g, "$1‘")
       .replace(/([A-Za-z])[`'ʻʼ´](?=[A-Za-z])/g, "$1’");
   }
@@ -219,7 +230,7 @@
       s = e ? "y." : "й.",
       i = e ? "h.v." : "ҳ.в.",
       a = String.raw`йил(?:лар)?\.?|й\.\s*й\.?|йй?\.?|yil(?:lar)?\.?|y\.\s*y\.?|yy?\.?|гг?\.?`,
-      o = String.raw`[ҳх]\.\s*в\.?|ҳв\.?|[hx]\.\s*v\.?|ҳозирги\s+вақтгача|ҳозиргача|hozirgi\s+vaqtgacha|hozirgacha|н\.\s*в\.?|гача|gacha`,
+      o = String.raw`[ҳх]\.\s*в\.?|ҳв\.?|[hx]\.\s*v\.?|[ҳх]\.\s*қ\.?|[hx]\.\s*q\.?|ҳозирги\s+вақтгача|ҳозиргача|ҳозирга\s+қадар|hozirgi\s+vaqtgacha|hozirgacha|hozirga\s+qadar|н\.\s*в\.?|гача|gacha`,
       r = t.match(
         new RegExp(
           String.raw`^(\d{4})\.?(?:\s*[-–—]\s*(\d{4})\.?)?((?:\s*(?:(?:` +
@@ -1096,15 +1107,28 @@
         let o = null;
         (a.includes("каринд") || a.startsWith("карин")
           ? (o = "rel")
-          : ["турар", "яшаш", "манзил"].some((t) => a.includes(t))
-            ? (o = "address")
-            : a.includes("фамил") || a.includes("исми")
-              ? (o = "name")
-              : a.includes("тугилган")
-                ? (o = "birth")
-                : (a.startsWith("иш") || a.includes("лавозим")) && (o = "work"),
+          : a.includes("фамил") || a.includes("исми")
+            ? (o = "name")
+            : a.includes("тугилган")
+              ? (o = "birth")
+              : a.startsWith("иш") ||
+                  a.includes("ишжой") ||
+                  a.includes("лавозим") ||
+                  a.includes("вазифа") ||
+                  a.includes("фаолият")
+                ? (o = "work")
+                : ["турар", "яшаш", "манзил"].some((t) => a.includes(t)) &&
+                  (o = "address"),
           o && !s.has(o) && (s.add(o), (e[i] = o), n++));
       }),
+      5 === t.length &&
+        4 === n &&
+        t.forEach((t, i) => {
+          if (!e[i]) {
+            const t = a.find((t) => !s.has(t));
+            t && (s.add(t), (e[i] = t), n++);
+          }
+        }),
       [e, n]
     );
   }
@@ -1315,8 +1339,18 @@
       u = !1,
       m = null;
     function w(t) {
-      (t = t.replace(/^\s*(?:[•·▪●\-–—]\s+|\d{1,2}[.)]\s+)/, "")) &&
-        n.work.push(t);
+      if (!(t = t.replace(/^\s*(?:[•·▪●\-–—]\s+|\d{1,2}[.)]\s+)/, ""))) return;
+      const e = I(t);
+      if (
+        R(e, "малумот") >= 0.85 ||
+        (!/^\d{4}/.test(t) &&
+          (/кари?н?д[оа]ш|якин|нинг(?:хак[иы]да|тугрисида|тогрисида|туррисида)/.test(
+            e,
+          ) &&
+            /хак[иы]да|тугрисида|тогрисида|туррисида/.test(e)))
+      )
+        return void y(t);
+      n.work.push(t);
     }
     function y(t) {
       if (t.includes("\n")) {
@@ -1365,7 +1399,10 @@
         return void (u = !1);
       const p = I(s);
       if (
-        (((/кари?н?д[оа]ш/.test(p) || p.includes("якин")) &&
+        (((/кари?н?д[оа]ш/.test(p) ||
+          p.includes("якин") ||
+          (!/^\d{4}/.test(s) &&
+            /нинг(?:хак[иы]да|тугрисида|тогрисида|туррисида)/.test(p))) &&
           /хак[иы]да|тугрисида|тогрисида|туррисида/.test(p)) ||
           (/якинкари?н?д[оа]ш/.test(p) && !/^\d{4}/.test(s))) &&
         l.length <= 20
@@ -1379,10 +1416,25 @@
             (t = n.work.pop() + " ");
         }
         i = "rel";
-        const e = (t + s).split(/\s+(?:яқин|yaqin)/i)[0];
+        const e = (t + s).split(
+          /\s+(?:яқин|yaqin|қариндош|qarindosh|ҳақида|haqida|тўғрисида|to[‘'`ʻ’]?g[‘'`ʻ’]?risida)/i,
+        )[0];
         return void (n.relHeadingName = e
           .replace(/(?:нинг|ning)$/i, "")
           .trim());
+      }
+      if ("work" === i && l.length <= 2 && R(p, "малумот") >= 0.85) {
+        if (n.work.length) {
+          const t = n.work[n.work.length - 1];
+          !/^\d/.test(t) &&
+            t.split(" ").length <= 4 &&
+            /^[A-ZА-ЯЎҚҒҲЁ]/.test(t) &&
+            (n.relHeadingName = n.work
+              .pop()
+              .replace(/(?:нинг|ning)$/i, "")
+              .trim());
+        }
+        return void (i = "rel");
       }
       if ("rel" === i) {
         if (R(p, "малумот") >= 0.85) return;
@@ -2553,7 +2605,7 @@
         )
         .map((t) => t[0])));
     const w = new Set(),
-      y = (t) => (t ? (o.S.latin && (t = c(t)), P(t, w)) : t);
+      y = (t) => (t ? P(c(t), w) : t);
     {
       const t = [];
       ((o.name = g(o.name, t)), (o.relHeadingName = g(o.relHeadingName, t)));

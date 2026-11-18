@@ -453,7 +453,7 @@
         )
         .map((t) => t[0])));
     const w = new Set(),
-      y = (t) => (t ? (o.S.latin && (t = c(t)), P(t, w)) : t);
+      y = (t) => (t ? P(c(t), w) : t);
     {
       const t = [];
       ((o.name = g(o.name, t)), (o.relHeadingName = g(o.relHeadingName, t)));

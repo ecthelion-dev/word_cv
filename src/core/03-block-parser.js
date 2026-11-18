@@ -157,15 +157,28 @@
         let o = null;
         (a.includes("каринд") || a.startsWith("карин")
           ? (o = "rel")
-          : ["турар", "яшаш", "манзил"].some((t) => a.includes(t))
-            ? (o = "address")
-            : a.includes("фамил") || a.includes("исми")
-              ? (o = "name")
-              : a.includes("тугилган")
-                ? (o = "birth")
-                : (a.startsWith("иш") || a.includes("лавозим")) && (o = "work"),
+          : a.includes("фамил") || a.includes("исми")
+            ? (o = "name")
+            : a.includes("тугилган")
+              ? (o = "birth")
+              : a.startsWith("иш") ||
+                  a.includes("ишжой") ||
+                  a.includes("лавозим") ||
+                  a.includes("вазифа") ||
+                  a.includes("фаолият")
+                ? (o = "work")
+                : ["турар", "яшаш", "манзил"].some((t) => a.includes(t)) &&
+                  (o = "address"),
           o && !s.has(o) && (s.add(o), (e[i] = o), n++));
       }),
+      5 === t.length &&
+        4 === n &&
+        t.forEach((t, i) => {
+          if (!e[i]) {
+            const t = a.find((t) => !s.has(t));
+            t && (s.add(t), (e[i] = t), n++);
+          }
+        }),
       [e, n]
     );
   }
@@ -376,8 +389,18 @@
       u = !1,
       m = null;
     function w(t) {
-      (t = t.replace(/^\s*(?:[•·▪●\-–—]\s+|\d{1,2}[.)]\s+)/, "")) &&
-        n.work.push(t);
+      if (!(t = t.replace(/^\s*(?:[•·▪●\-–—]\s+|\d{1,2}[.)]\s+)/, ""))) return;
+      const e = I(t);
+      if (
+        R(e, "малумот") >= 0.85 ||
+        (!/^\d{4}/.test(t) &&
+          (/кари?н?д[оа]ш|якин|нинг(?:хак[иы]да|тугрисида|тогрисида|туррисида)/.test(
+            e,
+          ) &&
+            /хак[иы]да|тугрисида|тогрисида|туррисида/.test(e)))
+      )
+        return void y(t);
+      n.work.push(t);
     }
     function y(t) {
       if (t.includes("\n")) {
@@ -426,7 +449,10 @@
         return void (u = !1);
       const p = I(s);
       if (
-        (((/кари?н?д[оа]ш/.test(p) || p.includes("якин")) &&
+        (((/кари?н?д[оа]ш/.test(p) ||
+          p.includes("якин") ||
+          (!/^\d{4}/.test(s) &&
+            /нинг(?:хак[иы]да|тугрисида|тогрисида|туррисида)/.test(p))) &&
           /хак[иы]да|тугрисида|тогрисида|туррисида/.test(p)) ||
           (/якинкари?н?д[оа]ш/.test(p) && !/^\d{4}/.test(s))) &&
         l.length <= 20
@@ -440,10 +466,25 @@
             (t = n.work.pop() + " ");
         }
         i = "rel";
-        const e = (t + s).split(/\s+(?:яқин|yaqin)/i)[0];
+        const e = (t + s).split(
+          /\s+(?:яқин|yaqin|қариндош|qarindosh|ҳақида|haqida|тўғрисида|to[‘'`ʻ’]?g[‘'`ʻ’]?risida)/i,
+        )[0];
         return void (n.relHeadingName = e
           .replace(/(?:нинг|ning)$/i, "")
           .trim());
+      }
+      if ("work" === i && l.length <= 2 && R(p, "малумот") >= 0.85) {
+        if (n.work.length) {
+          const t = n.work[n.work.length - 1];
+          !/^\d/.test(t) &&
+            t.split(" ").length <= 4 &&
+            /^[A-ZА-ЯЎҚҒҲЁ]/.test(t) &&
+            (n.relHeadingName = n.work
+              .pop()
+              .replace(/(?:нинг|ning)$/i, "")
+              .trim());
+        }
+        return void (i = "rel");
       }
       if ("rel" === i) {
         if (R(p, "малумот") >= 0.85) return;
