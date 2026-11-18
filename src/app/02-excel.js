@@ -1995,8 +1995,10 @@ function drawNew() {
             .replace(/\s+/g, " ")
         : "",
     o = () => {
-      if (((xl.q = a.value), (n.textContent = ""), !a.value.trim())) return;
-      const e = searchRows(a.value);
+      ((xl.q = a.value), (n.textContent = ""));
+      const e = a.value.trim()
+        ? searchRows(a.value)
+        : (xl.unmatched || []).filter((e) => !isHeadRow(xl.rows[e]));
       if (!e.length)
         return void n.append(el("p", "msg", "Hech kim topilmadi."));
       const t = "lat" === scriptNow();

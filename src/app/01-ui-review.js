@@ -518,6 +518,11 @@ function syncKpi() {
   $("kpis").addEventListener("click", (e) => {
     const t = e.target.closest(".kpi");
     if (!t) return;
+    if ("nodoc" === t.dataset.f) {
+      "undefined" != typeof ck && (ck.tab = "miss");
+      showView("check");
+      return;
+    }
     const a =
       rf() === t.dataset.f && "all" !== t.dataset.f ? "all" : t.dataset.f;
     listPage = 0;
@@ -1769,14 +1774,14 @@ function mbarSync() {
 function updateStats() {
   statsT && (clearTimeout(statsT), (statsT = null));
   try {
-    const e = document.getElementById("nChk");
-    if (e) {
-      const t =
+    const e = document.getElementById("nChk"),
+      t =
         xl.rows && xl.rows.length && xl.unmatched && xl.ran
           ? xl.unmatched.filter((e) => !isHeadRow(xl.rows[e])).length
           : 0;
-      e.textContent = t ? String(t) : "";
-    }
+    e && (e.textContent = t ? String(t) : "");
+    $("sNoDoc") && ($("sNoDoc").textContent = t);
+    $("kNoDoc") && ($("kNoDoc").hidden = !t);
   } catch (e) {}
   const e = items.length,
     t = { ok: 0, serious: 0, minor: 0, err: 0, queue: 0, excl: 0, gone: 0 };

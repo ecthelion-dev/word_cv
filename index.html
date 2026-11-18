@@ -96,6 +96,7 @@
         <button type="button" class="kpi warn" data-f="minor" aria-pressed="false"><span>Kichik</span><b id="sMin">0</b><small>rasm yo'q, imlo tuzatilgan</small></button>
         <button type="button" class="kpi dupk" data-f="other" aria-pressed="false"><span>Takror va xato</span><b><span id="sDupN">0</span> <em>+ <span id="sErr">0</span></em></b><small id="sOtherSub">takror · o'qilmagan</small></button>
         <button type="button" class="kpi gonek" data-f="gone" aria-pressed="false" id="kGone" hidden><span>Excel'da yo'q</span><b id="sGone">0</b><small>bazada bunday xodim yo'q</small></button>
+        <button type="button" class="kpi warn" data-f="nodoc" aria-pressed="false" id="kNoDoc" hidden><span>Obyektivkasi yo'q</span><b id="sNoDoc">0</b><small>Excel'da bor, fayli yo'q</small></button>
       </div>
         <div class="tbar">
           <label class="search"><span hidden>Qidirish</span><input type="search" id="rSearch" placeholder="F.I.Sh. yoki fayl nomi…" autocomplete="off" aria-label="Natijalardan qidirish"></label>
@@ -511,13 +512,13 @@
   </div>
 </dialog>
 <script src="vendor/jszip.min.js"></script>
-<script src="js/core.js?v=lead-edu-16"></script>
+<script src="js/core.js?v=lead-edu-17"></script>
 <script src="js/coi-engine.js?v=coi-shared-2"></script>
 <script src="js/science-engine.js?v=sci-rank-2"></script>
 <script src="js/pdf-engine.js?v=pdf-worker-1"></script>
 <script src="js/file-error.js?v=pdf-error-1"></script>
 <script src="js/scanned-pdf-ocr.js?v=scan-ocr-1"></script>
-<script src="js/app.js?v=lead-edu-16"></script>
+<script src="js/app.js?v=lead-edu-17"></script>
 <script>"serviceWorker" in navigator && location.protocol !== "file:" && navigator.serviceWorker.register("sw.js").catch(() => {});</script>
 </body>
 </html>

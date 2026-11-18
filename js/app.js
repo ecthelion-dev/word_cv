@@ -525,6 +525,11 @@ function syncKpi() {
   $("kpis").addEventListener("click", (e) => {
     const t = e.target.closest(".kpi");
     if (!t) return;
+    if ("nodoc" === t.dataset.f) {
+      "undefined" != typeof ck && (ck.tab = "miss");
+      showView("check");
+      return;
+    }
     const a =
       rf() === t.dataset.f && "all" !== t.dataset.f ? "all" : t.dataset.f;
     listPage = 0;
@@ -1776,14 +1781,14 @@ function mbarSync() {
 function updateStats() {
   statsT && (clearTimeout(statsT), (statsT = null));
   try {
-    const e = document.getElementById("nChk");
-    if (e) {
-      const t =
+    const e = document.getElementById("nChk"),
+      t =
         xl.rows && xl.rows.length && xl.unmatched && xl.ran
           ? xl.unmatched.filter((e) => !isHeadRow(xl.rows[e])).length
           : 0;
-      e.textContent = t ? String(t) : "";
-    }
+    e && (e.textContent = t ? String(t) : "");
+    $("sNoDoc") && ($("sNoDoc").textContent = t);
+    $("kNoDoc") && ($("kNoDoc").hidden = !t);
   } catch (e) {}
   const e = items.length,
     t = { ok: 0, serious: 0, minor: 0, err: 0, queue: 0, excl: 0, gone: 0 };
@@ -5355,8 +5360,10 @@ function drawNew() {
             .replace(/\s+/g, " ")
         : "",
     o = () => {
-      if (((xl.q = a.value), (n.textContent = ""), !a.value.trim())) return;
-      const e = searchRows(a.value);
+      ((xl.q = a.value), (n.textContent = ""));
+      const e = a.value.trim()
+        ? searchRows(a.value)
+        : (xl.unmatched || []).filter((e) => !isHeadRow(xl.rows[e]));
       if (!e.length)
         return void n.append(el("p", "msg", "Hech kim topilmadi."));
       const t = "lat" === scriptNow();
@@ -14803,36 +14810,6 @@ function dualBuildMergedRows() {
     if (!match) missing.push(group.name);
     return row;
   });
-
-  // Also include employees present in 2-Excel who were not in 1-Excel so they
-  // are never falsely marked as "Excel'da yo'q".
-  const extraPosGroups = new Map();
-  for (const rec of positions.records) {
-    const mk = nameLoose(rec.name) || SpravkaCore.norm(rec.name);
-    if (!mk || matchedPosKeys.has(mk)) continue;
-    if (!extraPosGroups.has(mk)) extraPosGroups.set(mk, []);
-    extraPosGroups.get(mk).push(rec);
-  }
-  for (const list of extraPosGroups.values()) {
-    const rec = dualMergeMatchingRecords(list);
-    if (!rec) continue;
-    const row = new Array(totalCols).fill("");
-    if (employeeMap.name !== undefined) row[employeeMap.name] = rec.name;
-    if (employeeMap.since_date !== undefined && rec.fields && rec.fields.since_date) {
-      row[employeeMap.since_date] = rec.fields.since_date;
-    }
-    if (employeeMap.rate !== undefined && rec.fields && rec.fields.rate) {
-      row[employeeMap.rate] = rec.fields.rate;
-    }
-    row[positionIndex] = rec.position || "";
-    row[deptIndex] = rec.dept || "";
-    row[orgIndex] = rec.org || "";
-    for (const col of extraCols) {
-      row[col.colIndex] =
-        rec.fields && rec.fields[col.key] ? rec.fields[col.key] : "";
-    }
-    mergedRows.push(row);
-  }
 
   // The employee sheet is authoritative for name/date/rate. Its job title is
   // deliberately replaced with dedicated columns sourced from the second book.
