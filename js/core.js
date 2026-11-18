@@ -29,7 +29,10 @@
       title: ["Илмий унвони"],
       languages: ["Қайси чет тилларини билади", "Чет тилларини билиши"],
       military: ["Ҳарбий (махсус) унвони", "Ҳарбий унвони"],
-      awards: ["Давлат мукофотлари билан тақдирланганми (қанақа)"],
+      awards: [
+        "Давлат мукофотлари билан тақдирланганми (қанақа)",
+        "Давлат мукофотлари билан мукофотланганми (қанақа)",
+      ],
       deputy: [
         "Халқ депутатлари, республика, вилоят, шаҳар ва туман Кенгаши депутатими ёки бошқа сайланадиган органларнинг аъзосими (тўлиқ кўрсатилиши лозим)",
         "Халқ депутатлари республика, вилоят, шаҳри ва туман Кенгаши депутатими ёки бошқа сайланадиган органларнинг аъзосими (тўлиқ кўрсатилиши лозим)",
@@ -1420,6 +1423,10 @@
           /\s+(?:яқин|yaqin|қариндош|qarindosh|ҳақида|haqida|тўғрисида|to[‘'`ʻ’]?g[‘'`ʻ’]?risida)/i,
         )[0];
         return void (n.relHeadingName = e
+          .replace(
+            /^(?:.*?\b(?:кафедраси|бўлими|факультети|институти|университети|маркази|ўқитувчиси|ўқитувчи|доценти|доцент|профессори|профессор|мудири|мудир|бошлиғи|декани|проректори|ректори|kafedrasi|bo‘limi|fakulteti|instituti|universiteti|markazi|o‘qituvchisi|o‘qituvchi|dotsenti|dotsent|professori|professor|mudiri|mudir|boshlig‘i|dekani|prorektori|rektori)\s+)?(?:(?:в\.?\s*б\.?|v\.?\s*b\.?)\s*)?(?:(?:доцент|профессор|dotsent|professor)\s*)?(?:(?:в\.?\s*б\.?|v\.?\s*b\.?)\s*)?/i,
+            "",
+          )
           .replace(/(?:нинг|ning)$/i, "")
           .trim());
       }
@@ -2614,10 +2621,18 @@
           `F.I.Sh. yonidagi izoh olib tashlandi: «(${e})» — bu ism emas, kerak bo‘lsa alohida qayd eting.`,
         );
     }
-    ((o.name = y(o.name)),
+    const normNameSuffix = (t) =>
+      t
+        ? String(t)
+            .replace(/\s+Ўғли$/i, " ўғли")
+            .replace(/\s+Қизи$/i, " қизи")
+            .replace(/\s+O[‘’'`ʻ]g[‘’'`ʻ]li$/i, " o‘g‘li")
+            .replace(/\s+Qizi$/i, " qizi")
+        : t;
+    ((o.name = normNameSuffix(y(o.name))),
       (o.since = y(o.since)),
       (o.position = y(o.position)),
-      (o.relHeadingName = y(o.relHeadingName)));
+      (o.relHeadingName = normNameSuffix(y(o.relHeadingName))));
     for (const t of Object.keys(o.fields)) o.fields[t] = y(o.fields[t]);
     const b = o.work.map(y);
     o.work = b.map((t) => d(t, o.S.latin));

@@ -462,10 +462,18 @@
           `F.I.Sh. yonidagi izoh olib tashlandi: «(${e})» — bu ism emas, kerak bo‘lsa alohida qayd eting.`,
         );
     }
-    ((o.name = y(o.name)),
+    const normNameSuffix = (t) =>
+      t
+        ? String(t)
+            .replace(/\s+Ўғли$/i, " ўғли")
+            .replace(/\s+Қизи$/i, " қизи")
+            .replace(/\s+O[‘’'`ʻ]g[‘’'`ʻ]li$/i, " o‘g‘li")
+            .replace(/\s+Qizi$/i, " qizi")
+        : t;
+    ((o.name = normNameSuffix(y(o.name))),
       (o.since = y(o.since)),
       (o.position = y(o.position)),
-      (o.relHeadingName = y(o.relHeadingName)));
+      (o.relHeadingName = normNameSuffix(y(o.relHeadingName))));
     for (const t of Object.keys(o.fields)) o.fields[t] = y(o.fields[t]);
     const b = o.work.map(y);
     o.work = b.map((t) => d(t, o.S.latin));

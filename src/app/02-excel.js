@@ -1316,7 +1316,7 @@ function diffRow(e, t) {
           old: e.fields[t] || "",
           val: r,
           on: !0,
-          auto: -1 === o,
+          auto: -1 === o || !e.fields[t] || isEmptyV(e.fields[t]),
         });
       }
     }

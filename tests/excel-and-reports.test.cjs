@@ -367,4 +367,93 @@ test("analyzeBlocks: qarindoshlar jadvali ustunlari («Иш жой ва манз
   );
 });
 
+test("dualBuildMergedRows: 2-Excel'dagi mutaxassislik va boshqa shaxsiy ustunlarni saqlab qoladi va bo‘sh maydonni avtomatik to‘ldiradi", () => {
+  const sheets = [
+    {
+      name: "ходимлар рўйхати",
+      rows: [
+        [
+          "№",
+          "Фамилияси, исми ва отасининг исми",
+          "Ташкилот номи",
+          "Ишлаётган бошқарма ёки факултет, кафедра ва бўлим номи",
+          "Лавозими",
+          "Мутахассислиги",
+        ],
+        [
+          "1",
+          "Уролов Сардор Абдулла ўғли",
+          "Термиз давлат педагогика институти",
+          "Спорт фаолияти кафедраси",
+          "Дотцент в.б.",
+          "Жисмоний тарбия ва спорт машғулотлари назарияси ва методикаси",
+        ],
+      ],
+    },
+  ];
+  const parsedPos = app.dualReadPositionWorkbook(sheets);
+  assert.equal(
+    parsedPos.records[0].fields.specialty,
+    "Жисмоний тарбия ва спорт машғулотлари назарияси ва методикаси",
+  );
+
+  const xlRef = vm.runInContext("xl", app);
+  xlRef.sources = {
+    employee: {
+      headers: ["ФИО", "Lavozim", "Ставка", "Дата приказа о приеме"],
+      rows: [
+        [
+          "URALOV SARDOR ABDULLA O‘G‘LI",
+          "Доцент вазифасини бажарувчи",
+          "1.00",
+          "2026-09-02",
+        ],
+      ],
+      map: { name: 0, position: 1, rate: 2, since_date: 3 },
+      fileName: "employees.xlsx",
+    },
+    positions: {
+      records: parsedPos.records,
+      selectedSheets: parsedPos.selectedSheets,
+      fileName: "Malumotlar_bazasi.xlsx",
+    },
+    merged: false,
+  };
+  const ok = app.dualBuildMergedRows();
+  assert.equal(ok, true);
+  assert.notEqual(xlRef.map.specialty, undefined);
+
+  const blocks = [
+    { type: "p", text: "МАЪЛУМОТНОМА" },
+    { type: "p", text: "Уралов Сардор Абдулла Ўғли" },
+    { type: "p", text: "Қайси тилларни билади : Рус тили" },
+    { type: "p", text: "Давлат мукофатлари билан мукофатланганми ( қанақа )" },
+    { type: "p", text: "йўқ" },
+    {
+      type: "p",
+      text: "Доцент в.б. Уралов Сардор Абдулла ўғлининг яқин қариндошлари ҳақида МАЪЛУМОТ",
+    },
+  ];
+  const doc = app.SpravkaCore.analyzeBlocks(
+    blocks,
+    blocks.map((b) => b.text),
+    null,
+    {},
+  ).data;
+  assert.equal(doc.name, "Уралов Сардор Абдулла ўғли");
+  assert.equal(doc.relHeadingName, "Уралов Сардор Абдулла ўғли");
+  assert.equal(doc.fields.languages, "Рус тили");
+  assert.equal(doc.fields.awards, "йўқ");
+
+  const changes = app.diffRow(doc, xlRef.rows[0]);
+  const specChange = changes.find((c) => c.key === "specialty");
+  assert.ok(specChange);
+  assert.equal(specChange.auto, true);
+  assert.equal(
+    specChange.val,
+    "Жисмоний тарбия ва спорт машғулотлари назарияси ва методикаси",
+  );
+});
+
+
 

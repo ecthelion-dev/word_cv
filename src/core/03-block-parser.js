@@ -470,6 +470,10 @@
           /\s+(?:яқин|yaqin|қариндош|qarindosh|ҳақида|haqida|тўғрисида|to[‘'`ʻ’]?g[‘'`ʻ’]?risida)/i,
         )[0];
         return void (n.relHeadingName = e
+          .replace(
+            /^(?:.*?\b(?:кафедраси|бўлими|факультети|институти|университети|маркази|ўқитувчиси|ўқитувчи|доценти|доцент|профессори|профессор|мудири|мудир|бошлиғи|декани|проректори|ректори|kafedrasi|bo‘limi|fakulteti|instituti|universiteti|markazi|o‘qituvchisi|o‘qituvchi|dotsenti|dotsent|professori|professor|mudiri|mudir|boshlig‘i|dekani|prorektori|rektori)\s+)?(?:(?:в\.?\s*б\.?|v\.?\s*b\.?)\s*)?(?:(?:доцент|профессор|dotsent|professor)\s*)?(?:(?:в\.?\s*б\.?|v\.?\s*b\.?)\s*)?/i,
+            "",
+          )
           .replace(/(?:нинг|ning)$/i, "")
           .trim());
       }

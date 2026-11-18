@@ -4656,7 +4656,7 @@ function diffRow(e, t) {
           old: e.fields[t] || "",
           val: r,
           on: !0,
-          auto: -1 === o,
+          auto: -1 === o || !e.fields[t] || isEmptyV(e.fields[t]),
         });
       }
     }
@@ -14453,6 +14453,25 @@ function dualSheetPriority(name) {
   return 0;
 }
 
+const DUAL_EXTRA_FIELDS = [
+  ["birth_date", "Tug‘ilgan sana (2-Excel)"],
+  ["birth_place", "Tug‘ilgan joyi (2-Excel)"],
+  ["nationality", "Millati (2-Excel)"],
+  ["party", "Partiyaviyligi (2-Excel)"],
+  ["education", "Ma’lumoti (2-Excel)"],
+  ["grad_year", "Tamomlagan (2-Excel)"],
+  ["grad_years", "OTMni tugatgan yili (2-Excel)"],
+  ["otm", "Tamomlagan OTM nomi (2-Excel)"],
+  ["specialty", "Mutaxassisligi (2-Excel)"],
+  ["degree", "Ilmiy darajasi (2-Excel)"],
+  ["title", "Ilmiy unvoni (2-Excel)"],
+  ["staff_cat", "Xodim toifasi (2-Excel)"],
+  ["languages", "Chet tillari (2-Excel)"],
+  ["military", "Harbiy unvoni (2-Excel)"],
+  ["awards", "Davlat mukofotlari (2-Excel)"],
+  ["deputy", "Deputatlik (2-Excel)"],
+];
+
 function dualMapHeaders(headers) {
   const map = {};
   (headers || []).forEach((header, index) => {
@@ -14497,11 +14516,28 @@ function dualReadPositionWorkbook(sheets) {
       const position = String(row[map.position] || "").trim();
       if (!name || !position) continue;
 
+      const fields = {};
+      for (const [key] of DUAL_EXTRA_FIELDS) {
+        if (map[key] !== undefined) {
+          const val = String(row[map[key]] || "").trim();
+          if (val) fields[key] = val;
+        }
+      }
+      if (map.since_date !== undefined) {
+        const val = String(row[map.since_date] || "").trim();
+        if (val) fields.since_date = val;
+      }
+      if (map.rate !== undefined) {
+        const val = String(row[map.rate] || "").trim();
+        if (val) fields.rate = val;
+      }
+
       records.push({
         name,
         position,
         dept: map.dept === undefined ? "" : String(row[map.dept] || "").trim(),
         org: map.org === undefined ? "" : String(row[map.org] || "").trim(),
+        fields,
         sheet: candidate.sheet.name,
         priority: candidate.priority,
         rowNumber: index + picked.r + 2,
@@ -14607,6 +14643,31 @@ function dualBuildPositionIndex(records) {
   return { exact, buckets, items };
 }
 
+function dualMergeMatchingRecords(records) {
+  if (!records || !records.length) return null;
+  const sorted = records.slice().sort((a, b) => b.priority - a.priority);
+  const top = sorted[0];
+  const mergedFields = { ...(top.fields || {}) };
+  let dept = top.dept || "";
+  let org = top.org || "";
+  for (let i = 1; i < sorted.length; i++) {
+    const rec = sorted[i];
+    if (!dept && rec.dept) dept = rec.dept;
+    if (!org && rec.org) org = rec.org;
+    if (rec.fields) {
+      for (const [k, v] of Object.entries(rec.fields)) {
+        if (!mergedFields[k] && v) mergedFields[k] = v;
+      }
+    }
+  }
+  return {
+    ...top,
+    dept,
+    org,
+    fields: mergedFields,
+  };
+}
+
 function dualFindPosition(name, indexOrRecords) {
   const index = Array.isArray(indexOrRecords)
     ? dualBuildPositionIndex(indexOrRecords)
@@ -14616,12 +14677,11 @@ function dualFindPosition(name, indexOrRecords) {
   const targetLoose = nameLoose(name);
   const exactMatches = targetLoose ? index.exact.get(targetLoose) : null;
   if (exactMatches && exactMatches.length) {
-    return exactMatches.reduce((best, rec) =>
-      rec.priority > best.priority ? rec : best,
-    );
+    return dualMergeMatchingRecords(exactMatches);
   }
 
-  let best = null;
+  let bestScore = 0;
+  const matched = [];
   const targetParts = SpravkaCore.nameParts(name);
   const pool =
     targetParts.sur
@@ -14636,16 +14696,15 @@ function dualFindPosition(name, indexOrRecords) {
   for (const entry of pool) {
     const score = SpravkaCore.nameScore(targetParts, entry.parts);
     if (score < 0.86) continue;
-    if (
-      !best ||
-      score > best.score + 0.005 ||
-      (Math.abs(score - best.score) <= 0.005 &&
-        entry.record.priority > best.record.priority)
-    ) {
-      best = { record: entry.record, score };
+    if (score > bestScore + 0.005) {
+      bestScore = score;
+      matched.length = 0;
+      matched.push(entry.record);
+    } else if (Math.abs(score - bestScore) <= 0.005) {
+      matched.push(entry.record);
     }
   }
-  return best ? best.record : null;
+  return matched.length ? dualMergeMatchingRecords(matched) : null;
 }
 
 function dualBuildMergedRows() {
@@ -14667,16 +14726,25 @@ function dualBuildMergedRows() {
   const positionIndex = baseLength;
   const deptIndex = baseLength + 1;
   const orgIndex = baseLength + 2;
+  const extraCols = DUAL_EXTRA_FIELDS.map(([key, label], idx) => ({
+    key,
+    label,
+    colIndex: orgIndex + 1 + idx,
+  }));
+  const totalCols = orgIndex + 1 + extraCols.length;
   const headers = (employee.headers || []).slice();
   headers[positionIndex] = "Lavozim (ikkinchi Excel)";
   headers[deptIndex] = "Bo‘lim (ikkinchi Excel)";
   headers[orgIndex] = "Tashkilot (ikkinchi Excel)";
+  for (const col of extraCols) {
+    headers[col.colIndex] = col.label;
+  }
 
   const missing = [];
   const positionIndexObj = dualBuildPositionIndex(positions.records);
   const mergedRows = groups.map((group) => {
     const row = group.row.slice();
-    while (row.length <= orgIndex) row.push("");
+    while (row.length < totalCols) row.push("");
 
     if (employeeMap.since_date !== undefined && group.firstDate) {
       row[employeeMap.since_date] = group.firstDate;
@@ -14689,6 +14757,12 @@ function dualBuildMergedRows() {
     row[positionIndex] = match ? match.position : "";
     row[deptIndex] = match ? match.dept : "";
     row[orgIndex] = match ? match.org : "";
+    for (const col of extraCols) {
+      row[col.colIndex] =
+        match && match.fields && match.fields[col.key]
+          ? match.fields[col.key]
+          : "";
+    }
     if (!match) missing.push(group.name);
     return row;
   });
@@ -14698,6 +14772,11 @@ function dualBuildMergedRows() {
   employeeMap.position = positionIndex;
   employeeMap.dept = deptIndex;
   employeeMap.org = orgIndex;
+  for (const col of extraCols) {
+    if (employeeMap[col.key] === undefined) {
+      employeeMap[col.key] = col.colIndex;
+    }
+  }
   xl.map = employeeMap;
   xl.headers = headers;
   xl.rows = mergedRows;
@@ -14723,6 +14802,75 @@ function dualBuildMergedRows() {
     "Stavka va ishga qabul qilingan sana: «" + employee.fileName + "» (" +
     groups.length + " nafar xodim). Bir xodimda bir nechta yozuv bo‘lsa, " +
     "eng erta sana ish boshlagan sana, eng so‘nggi yozuvdagi stavka olinadi.";
+  dualRefreshSourceInfo();
+  $("xlActs").hidden = false;
+  $("xlRun").disabled = false;
+  store.saveXl();
+  return true;
+}
+
+function dualApplyPositionsOnly() {
+  const sources = xl.sources || {};
+  const positions = sources.positions;
+  if (!positions || !positions.records || !positions.records.length) return false;
+
+  const byKey = new Map();
+  for (const rec of positions.records) {
+    const k = nameLoose(rec.name) || SpravkaCore.norm(rec.name);
+    if (!k) continue;
+    if (!byKey.has(k)) byKey.set(k, []);
+    byKey.get(k).push(rec);
+  }
+  const mergedList = [...byKey.values()]
+    .map(dualMergeMatchingRecords)
+    .filter(Boolean);
+
+  const headers = [
+    "F.I.Sh.",
+    "Lavozim (2-Excel)",
+    "Bo‘lim (2-Excel)",
+    "Tashkilot (2-Excel)",
+    "Ishga kirgan sana (2-Excel)",
+    "Stavka (2-Excel)",
+    ...DUAL_EXTRA_FIELDS.map(([, label]) => label),
+  ];
+  const map = {
+    name: 0,
+    position: 1,
+    dept: 2,
+    org: 3,
+    since_date: 4,
+    rate: 5,
+  };
+  DUAL_EXTRA_FIELDS.forEach(([key], idx) => {
+    map[key] = 6 + idx;
+  });
+
+  const rows = mergedList.map((rec) => {
+    const f = rec.fields || {};
+    return [
+      rec.name,
+      rec.position || "",
+      rec.dept || "",
+      rec.org || "",
+      f.since_date || "",
+      f.rate || "",
+      ...DUAL_EXTRA_FIELDS.map(([key]) => f[key] || ""),
+    ];
+  });
+
+  xl.headers = headers;
+  xl.rows = rows;
+  xl.map = map;
+  xl.fileName = String(positions.fileName || "lavozimlar.xlsx");
+  xl.prevHeaders = headers.slice();
+  xl.used = null;
+  xl.matches = new Map();
+  xl.lead = null;
+  xl.ran = false;
+  calcUnmatched();
+  drawMap();
+  drawNew();
   dualRefreshSourceInfo();
   $("xlActs").hidden = false;
   $("xlRun").disabled = false;
@@ -14931,6 +15079,8 @@ $("xlJobFile").addEventListener("change", async () => {
       dualBuildMergedRows();
       dualBaseRunCompare();
     } else {
+      dualApplyPositionsOnly();
+      dualBaseRunCompare();
       dualSetWaitingState();
       store.saveXl();
     }
@@ -14954,9 +15104,14 @@ store.restore = async function (...args) {
   const result = await dualBaseRestore.apply(this, args);
   const sources = dualEnsureSources();
   if (dualReady()) {
-    if (!sources.merged) dualBuildMergedRows();
+    dualBuildMergedRows();
+    dualBaseRunCompare();
     $("xlRun").disabled = false;
     dualRefreshSourceInfo();
+  } else if (sources.positions && sources.positions.records && sources.positions.records.length) {
+    dualApplyPositionsOnly();
+    dualBaseRunCompare();
+    dualSetWaitingState();
   } else {
     dualSetWaitingState();
   }
