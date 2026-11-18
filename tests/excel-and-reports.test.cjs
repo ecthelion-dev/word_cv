@@ -458,7 +458,34 @@ test("dualBuildMergedRows: 2-Excel'dagi mutaxassislik va boshqa shaxsiy ustunlar
     app.cleanPersonName("XUDOYOROVA MARVARID MAHMUD QIZI"),
     "Xudoyorova Marvarid Mahmud qizi",
   );
+  assert.equal(
+    app.cleanPersonName("ALIMNAZAROV OLIM MENGLIBOY O‘G‘LI"),
+    "Alimnazarov Olim Mengliboy o‘g‘li",
+  );
+  assert.equal(
+    app.cleanPersonName("JURAYEV UMID TUXTA O‘G‘LI"),
+    "Jurayev Umid Tuxta o‘g‘li",
+  );
+  assert.equal(app.cleanPersonName("Тўраев Хайдар ХХХ"), "Тўраев Хайдар");
   assert.equal(app.niceName("YO‘LDOSHEV SHOHRUH"), "Yo‘ldoshev Shohruh");
+  assert.ok(
+    app.SpravkaCore.nameScore(
+      "Абраева Ўғилбека Аннаназаровна",
+      "ABRAYEVA OGULBEKA ANNANAZAROVNA",
+    ) >= 0.95,
+  );
+  assert.ok(
+    app.SpravkaCore.nameScore(
+      "Эшбойев Намоз Чори ўғли",
+      "ESHBAYEV NAMOZ CHORI O‘G‘LI",
+    ) >= 0.95,
+  );
+  assert.ok(
+    app.SpravkaCore.nameScore(
+      "Эркинова Меҳринисо Рўзиқул қизи",
+      "ERKINOVA MEHRINISO RO‘ZIBOY QIZI",
+    ) >= 0.9,
+  );
 });
 
 

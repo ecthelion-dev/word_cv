@@ -197,14 +197,24 @@
           [s.giv, s.sur],
         ]) {
           const o = i(n.sur, t),
-            r = n.giv && e ? i(n.giv, e) : 0.85;
-          if (o < 0.8 || r < 0.8) continue;
-          let l = 0.9;
-          (n.pat && s.pat && ((l = i(n.pat, s.pat)), l < 0.6)) ||
-            (a = Math.max(
-              a,
-              (1.1 * o + r + 0.9 * l) / 3 - (t === s.giv ? 0.02 : 0),
-            ));
+            r = n.giv && e ? i(n.giv, e) : 0.85,
+            c = n.pat && s.pat ? i(n.pat, s.pat) : 0.9;
+          if (o < 0.8 || (r < 0.8 && !(o >= 0.95 && c >= 0.95 && r >= 0.72)))
+            continue;
+          let l = c;
+          (n.pat &&
+            s.pat &&
+            o >= 0.95 &&
+            r >= 0.95 &&
+            n.pat.length >= 4 &&
+            s.pat.length >= 4 &&
+            n.pat.slice(0, 4) === s.pat.slice(0, 4) &&
+            (l = Math.max(l, 0.78)),
+            (n.pat && s.pat && l < 0.6) ||
+              (a = Math.max(
+                a,
+                (1.1 * o + r + 0.9 * l) / 3 - (t === s.giv ? 0.02 : 0),
+              )));
         }
         return Math.min(1, a);
       },

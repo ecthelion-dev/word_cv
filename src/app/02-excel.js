@@ -1072,10 +1072,19 @@ function cleanPersonName(e) {
     )),
     (t = t
       .filter((e) => !/[\d.№]/.test(e) && /[A-Za-zА-Яа-яЁёЎўҚқҒғҲҳ]/.test(e))
+      .filter(
+        (e) =>
+          !/^(?:х{2,}|x{2,}|отм|otm|мчж|mchj|тдпи|tdpi|терду|terdu)$/i.test(e),
+      )
       .filter((e) => NAME_PART.test(e) || /^[A-ZА-ЯЁЎҚҒҲ]/.test(e))
       .filter(
         (e, t, a) =>
-          !(a.length > 3 && !NAME_PART.test(e) && /^[A-ZА-ЯЁЎҚҒҲ]{1,4}$/.test(e)),
+          !(
+            a.length > 3 &&
+            !NAME_PART.test(e) &&
+            a.some((e) => /[a-zа-яёўқғҳ]/.test(e)) &&
+            /^[A-ZА-ЯЁЎҚҒҲ]{1,4}$/.test(e)
+          ),
       )));
   const a = t.findIndex((e, t) => t >= 1 && NAME_PATR_END.test(e));
   return (
@@ -1620,13 +1629,16 @@ function nameLoose(e) {
     .replace(/[^а-яa-z\s]/g, " ")
     .split(/\s+/)
     .filter(Boolean)
-    .filter((e) => !/^(?:угли|кизи|оглы|кизи|qizi|ugli)$/.test(e))
+    .filter((e) => !/^(?:угли|кизи|оглы|кизи|qizi|ugli|х{2,}|x{2,})$/.test(e))
     .slice(0, 3)
     .map((e, t) =>
       (2 === t
-        ? e.replace(/(?:на|а)$/, "")
+        ? e.replace(/(?:на|[ао])$/, "")
         : e.replace(/(ов|ев)а$/, "$1")
-      ).replace(/(.)\1+/g, "$1"),
+      )
+        .replace(/боев/g, "баев")
+        .replace(/^[оу]гул/g, "угил")
+        .replace(/(.)\1+/g, "$1"),
     )
     .join(" ");
 }

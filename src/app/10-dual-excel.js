@@ -363,7 +363,7 @@ function dualBuildMergedRows() {
       if (
         employeeMap.name !== undefined &&
         match.name &&
-        spellScore(match.name) > spellScore(group.name)
+        spellScore(match.name) >= spellScore(group.name)
       ) {
         row[employeeMap.name] = match.name;
       }
@@ -380,6 +380,56 @@ function dualBuildMergedRows() {
     if (!match) missing.push(group.name);
     return row;
   });
+
+  // For uploaded documents that are present in 2-Excel's active sheets (or under
+  // a maiden/married surname in 2-Excel) but not in 1-Excel, include only those
+  // matching 2-Excel records so they are not falsely marked "Excel'da yo'q" while
+  // keeping "Obyektivkasi yo'q" strictly based on 1-Excel.
+  if (typeof items !== "undefined" && items.length) {
+    const docRecords = [];
+    for (const it of items) {
+      if (!it.P || it.excluded || it.fromExcel) continue;
+      const nm =
+        it.P.name ||
+        it.P.relHeadingName ||
+        ((it.file && it.file.name) || "").replace(/\.[^.]+$/, "");
+      if (nm) docRecords.push({ name: nm, priority: 1 });
+    }
+    if (docRecords.length) {
+      const docIndexObj = dualBuildPositionIndex(docRecords);
+      const extraPosGroups = new Map();
+      for (const rec of positions.records) {
+        const mk = nameLoose(rec.name) || SpravkaCore.norm(rec.name);
+        if (!mk || matchedPosKeys.has(mk)) continue;
+        if (!extraPosGroups.has(mk)) extraPosGroups.set(mk, []);
+        extraPosGroups.get(mk).push(rec);
+      }
+      for (const list of extraPosGroups.values()) {
+        const rec = dualMergeMatchingRecords(list);
+        if (!rec || !dualFindPosition(rec.name, docIndexObj)) continue;
+        const row = new Array(totalCols).fill("");
+        if (employeeMap.name !== undefined) row[employeeMap.name] = rec.name;
+        if (
+          employeeMap.since_date !== undefined &&
+          rec.fields &&
+          rec.fields.since_date
+        ) {
+          row[employeeMap.since_date] = rec.fields.since_date;
+        }
+        if (employeeMap.rate !== undefined && rec.fields && rec.fields.rate) {
+          row[employeeMap.rate] = rec.fields.rate;
+        }
+        row[positionIndex] = rec.position || "";
+        row[deptIndex] = rec.dept || "";
+        row[orgIndex] = rec.org || "";
+        for (const col of extraCols) {
+          row[col.colIndex] =
+            rec.fields && rec.fields[col.key] ? rec.fields[col.key] : "";
+        }
+        mergedRows.push(row);
+      }
+    }
+  }
 
   // The employee sheet is authoritative for name/date/rate. Its job title is
   // deliberately replaced with dedicated columns sourced from the second book.
@@ -405,6 +455,7 @@ function dualBuildMergedRows() {
   xl.ran = false;
 
   sources.merged = true;
+  sources._itemsCount = typeof items !== "undefined" ? items.length : 0;
   sources.missingPositions = missing;
   sources.employeeCount = groups.length;
   sources.matchedPositions = groups.length - missing.length;
@@ -628,7 +679,10 @@ runCompare = function () {
   if (xl._dualLoading) return;
   const sources = dualEnsureSources();
   if (dualReady()) {
-    if (!sources.merged) dualBuildMergedRows();
+    const curCount = typeof items !== "undefined" ? items.length : 0;
+    if (!sources.merged || sources._itemsCount !== curCount) {
+      dualBuildMergedRows();
+    }
     return dualBaseRunCompare();
   }
   if (xl.rows && xl.rows.length) {

@@ -189,7 +189,7 @@
     for (const t of e) n += _.has(t) ? _.get(t) : t;
     return n.replace(/[^0-9a-zа-я]/g, "");
   }
-  const N = /^(?:угли|огли|кизи|киз|ули|оглу|улы|кизи)$/;
+  const N = /^(?:угли|огли|кизи|киз|ули|оглу|улы|кизи|х{2,}|x{2,})$/;
   function D(t) {
     return I(t)
       .replace(/дж/g, "ж")
@@ -197,6 +197,9 @@
       .replace(/щ/g, "ш")
       .replace(/я/g, "иа")
       .replace(/ю/g, "иу")
+      .replace(/([аеиоу])ие/g, "$1е")
+      .replace(/боев/g, "баев")
+      .replace(/^[оу]гул/g, "угил")
       .replace(/(.)\1+/g, "$1");
   }
   function E(t) {
