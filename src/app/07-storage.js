@@ -272,7 +272,9 @@ var store = {
         const a = unpackItem(e, i.get(t), i.get("h" + t));
         (a.folder || "")
           .split("/")
-          .some((e) => NONSTAFF_DIR_RE.test(e) || GONE_RE.test(e))
+          .some((e) => NONSTAFF_DIR_RE.test(e) || GONE_RE.test(e)) ||
+        NONSTAFF_FILE_RE.test(a.name || "") ||
+        ("function" == typeof isSummaryTableDoc && isSummaryTableDoc(a.P))
           ? s.push(a)
           : (l.push(a),
             "queue" === a.state &&

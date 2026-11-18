@@ -749,7 +749,18 @@ var addedKeys = new Set(),
   goneSkip = 0,
   phdSkip = 0;
 const NONSTAFF_DIR_RE =
-  /^\s*(?:\d+\s*[.)]\s*)?(?:phd|dsc|(?:таянч\s+)?докторант|(?:tayanch\s+)?doktorant|мустақил\s+изланувчи|mustaqil\s+izlanuvchi|соискател)/i;
+    /^\s*(?:\d+\s*[.)]\s*)?(?:phd|dsc|(?:таянч\s+)?докторант|(?:tayanch\s+)?doktorant|мустақил\s+изланувчи|mustaqil\s+izlanuvchi|соискател)/i,
+  NONSTAFF_FILE_RE =
+    /(?:фототаблица|fototablitsa|раҳбарлар(?:и)?[_\s]+тўғрисида|rahbarlar(?:i)?[_\s]+to[‘'`ʻ’]?g[‘'`ʻ’]?risida|ходимлар[_\s]+рўйхати|xodimlar[_\s]+ro[‘'`ʻ’]?yxati|штат[_\s]+жадвали|shtat[_\s]+jadvali)/i,
+  isSummaryTableDoc = (e) =>
+    !!e &&
+    (NONSTAFF_FILE_RE.test(e.name || "") ||
+      /(?:раҳбарлари|ходимлари)\s+тўғрисида|фототаблица|fototablitsa/i.test(
+        e.name || "",
+      ) ||
+      (!e.work.length &&
+        !e.relatives.length &&
+        String((e.fields && e.fields.grad_year) || "").length > 600));
 async function addFiles(e, t) {
   store.pending && void 0 === t && (await store.restore());
   const a = void 0 === t,
@@ -757,7 +768,7 @@ async function addFiles(e, t) {
     i = phdSkip;
   for (const n of e) {
     const e = n.name || "";
-    if (/^~\$|^\./.test(e)) continue;
+    if (/^~\$|^\./.test(e) || NONSTAFF_FILE_RE.test(e)) continue;
     const i = [
       t || "",
       n.relPath || n.webkitRelativePath || "",
@@ -1594,6 +1605,15 @@ async function pumpOne(e) {
       try {
         const a = await analyzeAny(t, e);
         if (!items.includes(t)) continue;
+        if (isSummaryTableDoc(a.data)) {
+          const e = items.indexOf(t);
+          (e >= 0 && items.splice(e, 1),
+            t.li && t.li.remove(),
+            t.fi && t.fi.remove(),
+            store.dirty.add(t),
+            statsSoon());
+          continue;
+        }
         ((t.P = a.data),
           (t.warnings = a.warnings),
           (t.summary = a.summary),
