@@ -658,7 +658,7 @@
               rt = it(ot);
             at(ot, rt);
             for (const t of nt) {
-              const e = t.birth ? Q(t.birth, r)[0] : "",
+              const e = t.birth ? relativeBirthYear(t.birth, r) : "",
                 n = Et(t),
                 s = [
                   r.relations[t.rel] || t.rel,
