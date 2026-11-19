@@ -357,11 +357,11 @@
       ].join("|");
     let r = s
       .replace(/\b\d{1,2}[./-]\d{1,2}[./-]\d{2,4}\b/g, " ")
-      .replace(new RegExp("\\b\\d{1,2}\\s*[-–./]?\\s*(?:" + o + ")\\b", "gi"), " ")
-      .replace(new RegExp("\\b(?:" + o + ")\\s*[-–./]?\\s*\\d{1,2}\\b", "gi"), " ")
+      .replace(new RegExp("(^|[^\\p{L}\\p{N}])\\d{1,2}\\s*[-–./]?\\s*(?:" + o + ")(?=$|[^\\p{L}\\p{N}])", "giu"), " ")
+      .replace(new RegExp("(^|[^\\p{L}\\p{N}])(?:" + o + ")\\s*[-–./]?\\s*\\d{1,2}(?=$|[^\\p{L}\\p{N}])", "giu"), " ")
       .replace(/\b\d{1,2}\s*[./-]\s*\d{1,2}\b/g, " ")
       .replace(new RegExp("\\b" + a + "\\b"), " ")
-      .replace(/\b(?:йил(?:и)?|yil(?:i)?|й{1,2}\.?|y{1,2}\.?)\b/gi, " ")
+      .replace(/(^|[^\p{L}])(?:йил(?:и)?|yil(?:i)?|й{1,2}\.?|y{1,2}\.?)(?=$|[^\p{L}])/giu, " ")
       .replace(/\s+/g, " ")
       .replace(/\s*[,;]\s*/g, ", ")
       .replace(/,\s*,+/g, ", ")
