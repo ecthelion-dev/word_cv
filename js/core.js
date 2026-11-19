@@ -5081,5 +5081,4 @@
       _ratio: R,
       _norm: I,
     }));
-
 })("undefined" != typeof window ? window : globalThis);
