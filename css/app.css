@@ -64,6 +64,8 @@ button{font-family:inherit}
 .btn2.dl{padding:9px 10px}
 .fmtmenu{position:fixed;z-index:60;min-width:250px;background:var(--surface);border:1px solid var(--line);border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,.18);padding:6px}
 .fmtmenu .fmh{font-size:12.5px;color:var(--muted);padding:6px 10px 4px}
+.fmtmenu .fmscript{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:7px 10px 9px;color:var(--ink);font-size:13px}
+.fmtmenu .fmscript select{min-width:138px;max-width:58%;border:1px solid var(--line);border-radius:7px;background:var(--surface);color:var(--ink);font:600 13px var(--font-body);padding:7px 26px 7px 9px;cursor:pointer}
 .fmtmenu .fmi{display:flex;flex-direction:column;align-items:flex-start;gap:1px;width:100%;font:inherit;color:var(--ink);background:none;border:0;border-radius:7px;padding:8px 10px;cursor:pointer;text-align:left}
 .fmtmenu .fmi b{font-size:14px}
 .fmtmenu .fmi span{font-size:12.5px;color:var(--muted)}
