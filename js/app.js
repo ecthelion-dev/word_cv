@@ -1274,8 +1274,19 @@ async function pdfPhoto(e) {
   }
 }
 function mapOutputText(data, convert) {
+  const mapStrings = (value) => {
+    if (typeof value === "string") return convert(value);
+    if (Array.isArray(value)) return value.map(mapStrings);
+    if (value && typeof value === "object") {
+      return Object.fromEntries(
+        Object.entries(value).map(([key, item]) => [key, mapStrings(item)]),
+      );
+    }
+    return value;
+  };
   const next = {
     ...data,
+    S: mapStrings(data.S || {}),
     fields: { ...(data.fields || {}) },
     work: [...(data.work || [])],
     relatives: (data.relatives || []).map((item) => ({ ...item })),
@@ -1468,6 +1479,10 @@ if (
       work: result.work[0],
       relative: result.relatives[0].name,
       relativeWork: result.relatives[0].work,
+      birthPlaceLabel: result.S.labels && result.S.labels.birth_place,
+      birthYearLabel: result.S.labels && result.S.labels.birth_date,
+      relationHeader: result.S.relHeaders && result.S.relHeaders[2],
+      relationExample: result.S.relations && result.S.relations["Турмуш ўртоғи"],
       scriptLatin: !!result.S.latin,
     };
   };
