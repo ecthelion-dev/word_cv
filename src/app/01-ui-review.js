@@ -1326,12 +1326,37 @@ function pickFormat(e, t) {
       el(
         "div",
         "fmh",
-        ("form" === t
+        "form" === t
           ? "To'ldirish varaqlari qaysi shaklda?"
-          : "Qaysi shaklda yuklab olinsin?") +
-          ` · yozuv: ${SCRIPT_LBL[scriptNow()]}`,
+          : "Qaysi shaklda yuklab olinsin?",
       ),
     ));
+  const scriptRow = el("label", "fmscript");
+  scriptRow.append(el("span", "", "Yozuv"));
+  const scriptSelect = document.createElement("select");
+  scriptSelect.setAttribute("aria-label", "Yozuv");
+  for (const [value, label] of [
+    ["auto", "Asl holida"],
+    ["cyr", "Кирилл"],
+    ["lat", "Lotin"],
+  ]) {
+    const option = document.createElement("option");
+    option.value = value;
+    option.textContent = label;
+    scriptSelect.append(option);
+  }
+  scriptSelect.value = scriptNow();
+  scriptSelect.addEventListener("change", () => {
+    const radio = document.querySelector(
+      `input[name="script"][value="${scriptSelect.value}"]`,
+    );
+    if (radio) {
+      radio.checked = !0;
+      radio.dispatchEvent(new Event("change", { bubbles: true }));
+    }
+  });
+  scriptRow.append(scriptSelect);
+  fmtMenu.append(scriptRow);
   for (const [e, t, n] of a) {
     const a = el("button", "fmi");
     ((a.type = "button"),
@@ -1356,6 +1381,15 @@ function pickFormat(e, t) {
       fmtDone = e;
     })
   );
+}
+if (
+  typeof window !== "undefined" &&
+  window.location &&
+  window.location.hostname === "127.0.0.1" &&
+  new URLSearchParams(window.location.search).has("e2e")
+) {
+  window.__openFormatMenuForTest = (anchor) => pickFormat(anchor, "one");
+  window.__formatScriptNowForTest = () => scriptNow();
 }
 async function downloadOne(e, t, a) {
   if (!e || !e.P) return;
