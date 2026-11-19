@@ -1983,7 +1983,7 @@
   // ==========================================================================
   // MODULE: src/core/05-transliterate.js
   // ==========================================================================
-/**
+  /**
  * 05-transliterate.js — Kirill va Lotin yozuvlari oʻrtasida oʻgirish (cyrToLat, latToCyr, convertScript)
  */
   const Bt = "аеёиоуўэюяыАЕЁИОУЎЭЮЯЫ",
