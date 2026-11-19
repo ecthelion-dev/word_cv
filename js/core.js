@@ -1983,7 +1983,7 @@
   // ==========================================================================
   // MODULE: src/core/05-transliterate.js
   // ==========================================================================
-  /**
+/**
  * 05-transliterate.js — Kirill va Lotin yozuvlari oʻrtasida oʻgirish (cyrToLat, latToCyr, convertScript)
  */
   const Bt = "аеёиоуўэюяыАЕЁИОУЎЭЮЯЫ",
@@ -2099,7 +2099,15 @@
       z: "з",
     };
   function Vt(t) {
-    const e = c(t);
+    const e = c(t)
+      .replace(/ö/g, "o‘")
+      .replace(/Ö/g, "O‘")
+      .replace(/ğ/g, "g‘")
+      .replace(/Ğ/g, "G‘")
+      .replace(/ş/g, "sh")
+      .replace(/Ş/g, "Sh")
+      .replace(/ç/g, "ch")
+      .replace(/Ç/g, "Ch");
     let n = "";
     for (let t = 0; t < e.length;) {
       const s = e[t],
@@ -2163,7 +2171,6 @@
     }
     t.S = e ? O.lat : O.cyr;
   }
-
   // ==========================================================================
   // MODULE: src/core/06-docx-analyzer.js
   // ==========================================================================
