@@ -341,7 +341,7 @@ async function photoFromFile(e) {
 }
 ($("newBlank").addEventListener("click", async () => {
   store.pending && (await store.restore());
-  const e = "lat" === scriptNow(),
+  const e = scriptIsLatin(),
     t = SpravkaCore.blankData(e);
   ((t.relatives = ["Отаси", "Онаси"].map((e) => ({
     rel: e,
@@ -1322,9 +1322,7 @@ function outP(e) {
     return next;
   }
 
-  let next = sourceIsLatin
-    ? mapOutputText(e, (value) => value)
-    : mapOutputText(e, (value) => value);
+  let next = mapOutputText(e, (value) => value);
   if (!sourceIsLatin) SpravkaCore.convertScript(next, true);
   next = mapOutputText(next, "new" === target ? toNewUzbekLatin : toLegacyUzbekLatin);
   next.work = next.work.map((line) => SpravkaCore.fixWorkLine(line, next.S.latin));
