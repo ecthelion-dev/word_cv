@@ -3043,7 +3043,7 @@ function renderFixed(e) {
       ([
         e.S.relations[t.rel] || t.rel,
         t.name,
-        t.birth,
+        SpravkaCore.relativeBirthYear(t.birth, e.S),
         t.work,
         t.address,
       ].forEach((e) => {
