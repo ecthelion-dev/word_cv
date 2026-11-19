@@ -3,10 +3,25 @@
  * Build script: Combines modular source files from `src/` into `js/core.js`, `js/app.js`, and `js/parseworker.js`.
  * Usage: node scripts/build.js
  */
+const crypto = require("crypto");
 const fs = require("fs");
 const path = require("path");
 
 const ROOT = path.resolve(__dirname, "..");
+
+function shortHash(text) {
+  return crypto.createHash("sha256").update(text, "utf8").digest("hex").slice(0, 8);
+}
+
+function replaceIfChanged(filePath, replacer) {
+  const prev = fs.readFileSync(filePath, "utf8");
+  const next = replacer(prev);
+  if (next !== prev) {
+    fs.writeFileSync(filePath, next, "utf8");
+    return true;
+  }
+  return false;
+}
 
 function readDirSorted(dir) {
   return fs
@@ -77,5 +92,30 @@ function buildWorker() {
 }
 
 buildCore();
-buildApp();
+const coreHash = shortHash(fs.readFileSync(path.join(ROOT, "js/core.js"), "utf8"));
+replaceIfChanged(path.join(ROOT, "src/parseworker.js"), (src) =>
+  src.replace(/core\.js\?v=[^"']+/, `core.js?v=${coreHash}`),
+);
 buildWorker();
+const workerHash = shortHash(fs.readFileSync(path.join(ROOT, "js/parseworker.js"), "utf8"));
+replaceIfChanged(path.join(ROOT, "src/app/01-ui-review.js"), (src) =>
+  src.replace(/js\/parseworker\.js\?v=[^"']+/, `js/parseworker.js?v=${workerHash}`),
+);
+buildApp();
+const appHash = shortHash(fs.readFileSync(path.join(ROOT, "js/app.js"), "utf8"));
+const cssHash = shortHash(fs.readFileSync(path.join(ROOT, "css/app.css"), "utf8"));
+replaceIfChanged(path.join(ROOT, "index.html"), (html) =>
+  html
+    .replace(/css\/app\.css\?v=[^"']+/, `css/app.css?v=${cssHash}`)
+    .replace(/js\/core\.js\?v=[^"']+/, `js/core.js?v=${coreHash}`)
+    .replace(/js\/app\.js\?v=[^"']+/, `js/app.js?v=${appHash}`),
+);
+const swHash = shortHash(`${cssHash}:${coreHash}:${workerHash}:${appHash}`);
+replaceIfChanged(path.join(ROOT, "sw.js"), (sw) =>
+  sw
+    .replace(/const CACHE = "malumotnoma-offline-[^"]+"/, `const CACHE = "malumotnoma-offline-${swHash}"`)
+    .replace(/\.\/css\/app\.css\?v=[^"']+/, `./css/app.css?v=${cssHash}`),
+);
+console.log(
+  `Synced cache versions: css=${cssHash} core=${coreHash} worker=${workerHash} app=${appHash} sw=${swHash}`,
+);

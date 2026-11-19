@@ -1,16 +1,14 @@
-const CACHE = "malumotnoma-offline-v3";
+const CACHE = "malumotnoma-offline-b5618597";
+// Heavy PDF/Fontkit vendor libs (~2.8 MB) are cached on-demand by the fetch handler
+// so first visit stays fast for Word-only workflows.
 const PRECACHE = [
   "./",
   "./index.html",
   "./manifest.json",
   "./css/fonts.css?v=a7797cf389",
-  "./css/app.css?v=lead-edu-24",
+  "./css/app.css?v=74a7131d",
   "./vendor/jszip.min.js",
   "./vendor/xmldom.js",
-  "./vendor/pdf.min.js",
-  "./vendor/pdf.worker.min.js",
-  "./vendor/pdf-lib.min.js",
-  "./vendor/fontkit.umd.min.js",
   "./js/core.js",
   "./js/coi-engine.js",
   "./js/science-engine.js",

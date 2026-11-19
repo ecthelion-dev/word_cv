@@ -402,6 +402,29 @@ function itemVisible(e, t) {
 }
 var listPage = 0,
   PAGE_N = 20;
+function syncSelectionUi() {
+  let selCount = 0,
+    unappr = 0;
+  for (const it of items) {
+    if (!it.selected) continue;
+    selCount++;
+    if (it.P && !it.excluded && !it.approved) unappr++;
+  }
+  const aSelBtn = $("apprSel");
+  if (aSelBtn) {
+    aSelBtn.hidden = !selCount;
+    aSelBtn.textContent = unappr
+      ? `Belgilanganlarni tasdiqlash (${unappr} ta)`
+      : `Belgilanganlar tasdiqlangan ✓`;
+    aSelBtn.disabled = !unappr;
+  }
+  const rInfoEl = $("rInfo");
+  if (rInfoEl && rInfoEl.dataset && void 0 !== rInfoEl.dataset.base) {
+    rInfoEl.textContent =
+      rInfoEl.dataset.base + (selCount ? ` · belgilangan: ${selCount}` : "");
+  }
+  return selCount;
+}
 function applyFilter(e) {
   e && (listPage = 0);
   const t = $("rSearch")
@@ -409,16 +432,9 @@ function applyFilter(e) {
     .map((e) => SpravkaCore.norm(e))
     .filter(Boolean);
   syncFnow();
-  const a = items.filter((e) => e.selected).length,
+  const a = syncSelectionUi(),
     n = a ? ` · belgilangan: ${a}` : "",
-    aSelBtn = $("apprSel");
-  if (aSelBtn) {
-    const unappr = items.filter((e) => e.selected && e.P && !e.excluded && !e.approved).length;
-    aSelBtn.hidden = !a;
-    aSelBtn.textContent = unappr ? `Belgilanganlarni tasdiqlash (${unappr} ta)` : `Belgilanganlar tasdiqlangan ✓`;
-    aSelBtn.disabled = !unappr;
-  }
-  const i = t.length || "all" !== rf() || $("fFolder").value || $("fDept").value,
+    i = t.length || "all" !== rf() || $("fFolder").value || $("fDept").value,
     o = [...list.children],
     l = [];
   for (const e of o) {
@@ -433,15 +449,17 @@ function applyFilter(e) {
     const a = t < r || t >= d;
     e.hidden !== a && (e.hidden = a);
   });
-  const c = l.length ? `${r + 1}–${Math.min(d, l.length)}` : "0";
-  (($("rInfo").textContent =
-    (l.length
+  const c = l.length ? `${r + 1}–${Math.min(d, l.length)}` : "0",
+    baseTxt = l.length
       ? i
         ? `${items.length} tadan ${l.length} tasi mos · ${c} ko'rsatilmoqda`
         : `Jami ${items.length} ta · ${c} ko'rsatilmoqda`
       : items.length
         ? "Bu shartga mos ma'lumotnoma yo'q."
-        : "") + n),
+        : "",
+    rInfoEl = $("rInfo");
+  (rInfoEl.dataset && (rInfoEl.dataset.base = baseTxt),
+    (rInfoEl.textContent = baseTxt + n),
     renderPager(s, l.length));
 }
 function pagerInto(e, t, a, n) {
@@ -778,7 +796,10 @@ async function addFiles(e, t) {
   store.pending && void 0 === t && (await store.restore());
   const a = void 0 === t,
     n = goneSkip,
-    i = phdSkip;
+    i = phdSkip,
+    listFrag = document.createDocumentFragment(),
+    flistFrag = document.createDocumentFragment();
+  let fragCount = 0;
   for (const n of e) {
     const e = n.name || "";
     if (/^~\$|^\./.test(e) || NONSTAFF_FILE_RE.test(e)) continue;
@@ -896,12 +917,14 @@ async function addFiles(e, t) {
     ((l.li = el("tr", "item")),
       (l.fi = el("li")),
       items.push(l),
-      list.append(l.li),
-      flist.append(l.fi),
+      listFrag.append(l.li),
+      flistFrag.append(l.fi),
+      fragCount++,
       resetCard(l),
       queue.push(l));
   }
-  (a &&
+  (fragCount && (list.append(listFrag), flist.append(flistFrag)),
+    a &&
     (phdSkip > i || goneSkip > n) &&
     (toast(
       [
@@ -989,9 +1012,18 @@ function xlBlank(e, t) {
     })
   );
 }
+const itemByP = new WeakMap();
+function findItemByP(p) {
+  if (!p || "object" != typeof p) return null;
+  let it = itemByP.get(p);
+  if (it && it.P === p) return it;
+  it = items.find((x) => x.P === p) || null;
+  if (it) itemByP.set(p, it);
+  return it;
+}
 function reviewReasons(e, t) {
   const a = [];
-  (void 0 === t && (t = items.find((t) => t.P === e)),
+  (void 0 === t && (t = findItemByP(e)),
     e.name || a.push("F.I.Sh. topilmadi"));
   const isTech = isTechDept(t, e);
   const n = [
@@ -1583,7 +1615,7 @@ async function pdfImageToBytes(e) {
     !0,
   ),
   window.addEventListener("resize", () => closeFmt(null)));
-const PARSE_WORKER_URL = "js/parseworker.js?v=lead-edu-24",
+const PARSE_WORKER_URL = "js/parseworker.js?v=b667bfe2",
   POOL_N = Math.max(1, Math.min(4, (navigator.hardwareConcurrency || 2) - 1));
 let poolBad = !1,
   jobSeq = 0;
@@ -2518,13 +2550,15 @@ function renderCard(e) {
     i = n && n.name,
     o = el("td", "c-cb"),
     l = el("input");
-  ((l.type = "checkbox"),
+  (n && itemByP.set(n, e),
+    (l.type = "checkbox"),
     (l.checked = !!e.selected),
     (l.disabled = !n),
     l.setAttribute("aria-label", "Belgilash: " + (i || e.name)),
     (l.onclick = (e) => e.stopPropagation()),
     (l.onchange = () => {
-      ((e.selected = l.checked), applyFilter());
+      ((e.selected = l.checked),
+        "sel" === rf() ? applyFilter() : syncSelectionUi());
     }),
     o.append(l));
   const s = el("td", "c-who");
@@ -2960,8 +2994,7 @@ function renderFixed(e) {
     a = e.S.labels,
     n = realFixes(e).map((e) => e[1]),
     isTech = isTechDept(
-      (typeof items !== "undefined" && items.find((x) => x.P === e)) ||
-        (typeof sel !== "undefined" && sel),
+      findItemByP(e) || (typeof sel !== "undefined" && sel),
       e,
     ),
     i = (e, t, a, i) => {
