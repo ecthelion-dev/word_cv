@@ -2013,7 +2013,7 @@ function drawNew() {
         : (xl.unmatched || []).filter((e) => !isHeadRow(xl.rows[e]));
       if (!e.length)
         return void n.append(el("p", "msg", "Hech kim topilmadi."));
-      const t = "lat" === scriptNow();
+      const t = scriptIsLatin();
       for (const a of e.slice(0, 20)) {
         const e = xl.rows[a],
           o = el("div"),
