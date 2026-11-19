@@ -114,7 +114,15 @@
       z: "з",
     };
   function Vt(t) {
-    const e = c(t);
+    const e = c(t)
+      .replace(/ö/g, "o‘")
+      .replace(/Ö/g, "O‘")
+      .replace(/ğ/g, "g‘")
+      .replace(/Ğ/g, "G‘")
+      .replace(/ş/g, "sh")
+      .replace(/Ş/g, "Sh")
+      .replace(/ç/g, "ch")
+      .replace(/Ç/g, "Ch");
     let n = "";
     for (let t = 0; t < e.length;) {
       const s = e[t],
