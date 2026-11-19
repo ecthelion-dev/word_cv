@@ -89,6 +89,37 @@ function createAppContext() {
 
 const app = createAppContext();
 
+test("relative birth details keep the year and place but remove day and month", () => {
+  const format = app.SpravkaCore.relativeBirthYear;
+  const scripts = app.SpravkaCore.SCRIPTS;
+
+  assert.equal(
+    format("1977-yil, 18-yanvar, Surxondaryo viloyati, Denov tumani", scripts.lat),
+    "1977 yil, Surxondaryo viloyati, Denov tumani",
+  );
+  assert.equal(
+    format("1980-йил, 19-август, Сурхондарё вилояти, Узун тумани", scripts.cyr),
+    "1980 йил, Сурхондарё вилояти, Узун тумани",
+  );
+  assert.equal(
+    format("2000-yil, 19-yul, Surxondaryo viloyati, Uzun tumani", scripts.lat),
+    "2000 yil, Surxondaryo viloyati, Uzun tumani",
+  );
+  assert.equal(
+    format("2005-yil, 24-may, Surxondaryo viloyati, Uzun tumani", scripts.lat),
+    "2005 yil, Surxondaryo viloyati, Uzun tumani",
+  );
+  assert.equal(
+    format("2001-yil, 26-may, Surxondaryo viloyati, Uzun tumani", scripts.lat),
+    "2001 yil, Surxondaryo viloyati, Uzun tumani",
+  );
+  assert.equal(
+    format("22.04.2003, Surxondaryo viloyati, Uzun tumani", scripts.lat),
+    "2003 yil, Surxondaryo viloyati, Uzun tumani",
+  );
+  assert.equal(format("18-yanvar, Surxondaryo viloyati", scripts.lat), "");
+});
+
 test("fmtPhone normalizes 9-, 10-, and 12-digit Uzbek phone numbers", () => {
   assert.equal(app.fmtPhone("93-638-23-26"), "+998 (93) 638-23-26");
   assert.equal(app.fmtPhone("998915897996"), "+998 (91) 589-79-96");
