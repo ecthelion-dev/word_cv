@@ -266,6 +266,30 @@ async function main() {
     assert.equal(diagnostics.missingPositions, 0, "no position match was lost");
     assert.equal(await page.locator("#xlRun").isDisabled(), false, "comparison enables after both files load");
 
+    // The individual download menu must expose all three output scripts.
+    await page.locator('input[name="script"][value="cyr"]').evaluate((el) => { el.checked = true; });
+    await page.evaluate(() => {
+      const anchor = document.createElement("button");
+      anchor.id = "__format-test-anchor";
+      anchor.textContent = "Test download";
+      anchor.style.cssText = "position:fixed;left:20px;top:20px";
+      document.body.append(anchor);
+      window.__formatSelectionPromise = window.__openFormatMenuForTest(anchor).then((choice) => {
+        window.__formatSelection = choice;
+      });
+    });
+    const scriptSelect = page.locator('.fmtmenu select[aria-label="Yozuv"]');
+    await scriptSelect.waitFor({ state: "visible" });
+    assert.equal(await scriptSelect.inputValue(), "cyr", "menu reflects the current Cyrillic choice");
+    await scriptSelect.selectOption("lat");
+    assert.equal(await page.locator('input[name="script"][value="lat"]').isChecked(), true, "Latin choice updates the shared script setting");
+    await scriptSelect.selectOption("auto");
+    assert.equal(await page.locator('input[name="script"][value="auto"]').isChecked(), true, "original-script choice is selectable");
+    await scriptSelect.selectOption("cyr");
+    await page.locator('.fmtmenu .fmi[data-v="pdf"]').click();
+    await page.waitForFunction(() => window.__formatSelection === "pdf", { timeout: 5000 });
+    await page.locator("#__format-test-anchor").evaluate((el) => el.remove());
+
     assert.deepEqual(pageErrors, [], "page has no uncaught JavaScript errors");
     console.log("Browser smoke test passed: both Excel sources loaded and authoritative fields merged.");
   } finally {
