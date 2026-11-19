@@ -919,9 +919,8 @@
     const n = String(t || "").replace(/\s+/g, " ").trim();
     if (!n) return "";
     const s = Q(n, e)[0],
-      i = s.match(/\b(\d{4})\b/);
-    if (!i) return "";
-    const a = i[1],
+      i = s.match(/\b(\d{4})\b/),
+      a = i ? i[1] : "",
       o = [
         "январ(?:ь|я)?",
         "феврал(?:ь|я)?",
@@ -943,8 +942,8 @@
         "iyun",
         "i?yul",
         "avgust",
-        "sentabr",
-        "oktabr",
+        "senty?abr",
+        "okty?abr",
         "noyabr",
         "dekabr",
       ].join("|");
@@ -952,14 +951,16 @@
       .replace(/\b\d{1,2}[./-]\d{1,2}[./-]\d{2,4}\b/g, " ")
       .replace(new RegExp("(^|[^\\p{L}\\p{N}])\\d{1,2}\\s*[-–./]?\\s*(?:" + o + ")(?=$|[^\\p{L}\\p{N}])", "giu"), " ")
       .replace(new RegExp("(^|[^\\p{L}\\p{N}])(?:" + o + ")\\s*[-–./]?\\s*\\d{1,2}(?=$|[^\\p{L}\\p{N}])", "giu"), " ")
-      .replace(/\b\d{1,2}\s*[./-]\s*\d{1,2}\b/g, " ")
-      .replace(new RegExp("\\b" + a + "\\b"), " ")
-      .replace(/(^|[^\p{L}])(?:йил(?:и)?|yil(?:i)?|й{1,2}\.?|y{1,2}\.?)(?=$|[^\p{L}])/giu, " ")
+      .replace(/\b\d{1,2}\s*[./-]\s*\d{1,2}\b/g, " ");
+    if (a) r = r.replace(new RegExp("\\b" + a + "\\b"), " ");
+    r = r
+      .replace(/(^|[^\p{L}])(?:йил(?:и)?|yil(?:i)?|й{1,2}\.?|y{1,2}\.?|г{1,2}\.?)(?=$|[^\p{L}])/giu, " ")
       .replace(/\s+/g, " ")
       .replace(/\s*[,;]\s*/g, ", ")
       .replace(/,\s*,+/g, ", ")
       .replace(/^[,;\s]+|[,;\s]+$/g, "")
       .trim();
+    if (!a) return r;
     return a + " " + (e && e.year ? e.year : "йил") + (r ? ", " + r : "");
   }
   const J = [];

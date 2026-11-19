@@ -117,7 +117,20 @@ test("relative birth details keep the year and place but remove day and month", 
     format("22.04.2003, Surxondaryo viloyati, Uzun tumani", scripts.lat),
     "2003 yil, Surxondaryo viloyati, Uzun tumani",
   );
-  assert.equal(format("18-yanvar, Surxondaryo viloyati", scripts.lat), "");
+  assert.equal(
+    format("12-sentyabr 1985 yil, Termiz tumani", scripts.lat),
+    "1985 yil, Termiz tumani",
+  );
+  assert.equal(
+    format("15.10.1985 г., Термез", scripts.cyr),
+    "1985 йил, Термез",
+  );
+  assert.equal(
+    format("18-yanvar, Surxondaryo viloyati", scripts.lat),
+    "Surxondaryo viloyati",
+  );
+  assert.equal(format("Маълумот йўқ", scripts.cyr), "Маълумот йўқ");
+  assert.equal(format("18-yanvar", scripts.lat), "");
 });
 
 test("fmtPhone normalizes 9-, 10-, and 12-digit Uzbek phone numbers", () => {

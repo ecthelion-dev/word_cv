@@ -4,7 +4,7 @@
 importScripts(
   "../vendor/jszip.min.js",
   "../vendor/xmldom.js?v=c21d145c2f",
-  "core.js?v=f763a8861c",
+  "core.js?v=lead-edu-24",
 );
 let pdfLoaded = !1;
 function pdfLib() {

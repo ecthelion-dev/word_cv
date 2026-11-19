@@ -1583,7 +1583,7 @@ async function pdfImageToBytes(e) {
     !0,
   ),
   window.addEventListener("resize", () => closeFmt(null)));
-const PARSE_WORKER_URL = "js/parseworker.js?v=pdf-diag-1",
+const PARSE_WORKER_URL = "js/parseworker.js?v=lead-edu-24",
   POOL_N = Math.max(1, Math.min(4, (navigator.hardwareConcurrency || 2) - 1));
 let poolBad = !1,
   jobSeq = 0;
