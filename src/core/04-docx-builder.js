@@ -267,7 +267,7 @@
       `<w:tr><w:trPr><w:tblHeader w:val="true"/></w:trPr>${s.relHeaders.map((t, e) => Dt(o[e], Nt(vt(t, 12, !0), { align: "center" }))).join("")}</w:tr>`,
     );
     for (const t of u) {
-      const e = t.birth ? Q(t.birth, s)[0] : "",
+      const e = t.birth ? relativeBirthYear(t.birth, s) : "",
         n = Et(t),
         i = [
           s.relations[t.rel] || t.rel,
