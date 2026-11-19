@@ -236,7 +236,7 @@ function newStaffSec(e) {
         return n.includes(e) || n.includes(t);
       });
     i.textContent = String(xl.unmatched.length);
-    const n = "lat" === scriptNow();
+    const n = scriptIsLatin();
     for (const e of a.slice(0, d)) {
       const t = xl.rows[e],
         a = el("li", "newrow");
@@ -1950,7 +1950,7 @@ function renderCheck(e) {
           const t = el("button", "btn2", "Excel'dan yaratish");
           ((t.type = "button"),
             (t.onclick = () => {
-              (createFromExcel(e.i, "lat" === scriptNow()),
+              (createFromExcel(e.i, scriptIsLatin()),
                 toast(`${e.nm} — Excel'dan ma'lumotnoma yaratildi ✓`),
                 renderCheck());
             }),
