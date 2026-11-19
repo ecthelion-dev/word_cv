@@ -319,8 +319,55 @@
       /^(\d{4})\s*[-–]?\s*(?:йили|йил|йй?\.?|г\.?|yili|yil|yy?\.?)?\s*[,;.]?\s*(.*)$/i,
     );
     return n
-      ? [`${n[1]} ${e ? e.year : "йил"}` + (n[2] ? `, ${n[2]}` : ""), !0]
+      ? [n[1] + " " + (e ? e.year : "йил") + (n[2] ? ", " + n[2] : ""), !0]
       : [t, !1];
+  }
+  function relativeBirthYear(t, e) {
+    const n = String(t || "").replace(/\s+/g, " ").trim();
+    if (!n) return "";
+    const s = Q(n, e)[0],
+      i = s.match(/\b(\d{4})\b/);
+    if (!i) return "";
+    const a = i[1],
+      o = [
+        "январ(?:ь|я)?",
+        "феврал(?:ь|я)?",
+        "март(?:а)?",
+        "апрел(?:ь|я)?",
+        "май(?:я)?",
+        "июн(?:ь|я)?",
+        "июл(?:ь|я)?",
+        "август(?:а)?",
+        "сентябр(?:ь|я)?",
+        "октябр(?:ь|я)?",
+        "ноябр(?:ь|я)?",
+        "декабр(?:ь|я)?",
+        "yanvar",
+        "fevral",
+        "mart",
+        "aprel",
+        "may",
+        "iyun",
+        "i?yul",
+        "avgust",
+        "sentabr",
+        "oktabr",
+        "noyabr",
+        "dekabr",
+      ].join("|");
+    let r = s
+      .replace(/\b\d{1,2}[./-]\d{1,2}[./-]\d{2,4}\b/g, " ")
+      .replace(new RegExp("\\b\\d{1,2}\\s*[-–./]?\\s*(?:" + o + ")\\b", "gi"), " ")
+      .replace(new RegExp("\\b(?:" + o + ")\\s*[-–./]?\\s*\\d{1,2}\\b", "gi"), " ")
+      .replace(/\b\d{1,2}\s*[./-]\s*\d{1,2}\b/g, " ")
+      .replace(new RegExp("\\b" + a + "\\b"), " ")
+      .replace(/\b(?:йил(?:и)?|yil(?:i)?|й{1,2}\.?|y{1,2}\.?)\b/gi, " ")
+      .replace(/\s+/g, " ")
+      .replace(/\s*[,;]\s*/g, ", ")
+      .replace(/,\s*,+/g, ", ")
+      .replace(/^[,;\s]+|[,;\s]+$/g, "")
+      .trim();
+    return a + " " + (e && e.year ? e.year : "йил") + (r ? ", " + r : "");
   }
   const J = [];
   for (const [t, e] of Object.entries(s))
