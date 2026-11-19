@@ -282,7 +282,9 @@ async function main() {
     await scriptSelect.waitFor({ state: "visible" });
     assert.equal(await scriptSelect.inputValue(), "cyr", "menu reflects the current Cyrillic choice");
     await scriptSelect.selectOption("lat");
-    assert.equal(await page.locator('input[name="script"][value="lat"]').isChecked(), true, "Latin choice updates the shared script setting");
+    assert.equal(await page.locator('input[name="script"][value="lat"]').isChecked(), true, "legacy Latin choice updates the shared script setting");
+    await scriptSelect.selectOption("new");
+    assert.equal(await page.locator('input[name="script"][value="new"]').isChecked(), true, "new Uzbek Latin choice is selectable");
     await scriptSelect.selectOption("auto");
     assert.equal(await page.locator('input[name="script"][value="auto"]').isChecked(), true, "original-script choice is selectable");
     await scriptSelect.selectOption("cyr");
@@ -290,8 +292,52 @@ async function main() {
     await page.waitForFunction(() => window.__formatSelection === "pdf", { timeout: 5000 });
     await page.locator("#__format-test-anchor").evaluate((el) => el.remove());
 
+    const cyrToNew = await page.evaluate(() => window.__convertScriptOutputForTest({
+      name: "Ўзбекистон Ғалаба",
+      position: "Шаҳар ва чироқ",
+      specialty: "Ўқитувчи",
+      work: "2020–2022: Чироқ шаҳри",
+      relative: "Ғолиб",
+      relativeWork: "Ўзбекистонда",
+    }, "cyr", "new"));
+    assert.equal(cyrToNew.name, "Özbekiston Ğalaba", "Cyrillic O‘ and G‘ become Ö and Ğ");
+    assert.equal(cyrToNew.position, "Şahar va çiroq", "Cyrillic Sh and Ch become Ş and Ç");
+    assert.equal(cyrToNew.specialty, "Öqituvchi", "new letters apply to the fields object");
+    assert.equal(cyrToNew.work, "2020–2022: Çiroq şähri".replace("ä", "a"), "new letters apply to work history");
+    assert.equal(cyrToNew.relative, "Ğolib", "new letters apply to relatives");
+    assert.equal(cyrToNew.relativeWork, "Özbekistonda", "relative work fields are converted too");
+
+    const oldLatinToNew = await page.evaluate(() => window.__convertScriptOutputForTest({
+      name: "O‘zbekiston G‘alaba",
+      position: "Shahar va chiroq",
+      specialty: "O‘qituvchi",
+      work: "2020–2022: Chiroq shahri",
+      relative: "G‘olib",
+    }, "lat", "new"));
+    assert.equal(oldLatinToNew.name, "Özbekiston Ğalaba", "legacy Latin converts to the new alphabet");
+
+    const newToCyr = await page.evaluate(() => window.__convertScriptOutputForTest({
+      name: "Özbekiston Ğalaba",
+      position: "Şahar va çiroq",
+      specialty: "Öqituvchi",
+      work: "2020–2022: Çiroq şähri".replace("ä", "a"),
+      relative: "Ğolib",
+    }, "lat", "cyr"));
+    assert.equal(newToCyr.name, "Ўзбекистон Ғалаба", "new alphabet converts back to Cyrillic");
+    assert.equal(newToCyr.position, "Шаҳар ва чироқ", "Ş and Ç convert back to Cyrillic");
+
+    const newToOld = await page.evaluate(() => window.__convertScriptOutputForTest({
+      name: "Özbekiston Ğalaba",
+      position: "Şahar va çiroq",
+      specialty: "Öqituvchi",
+      work: "2020–2022: Çiroq shahri",
+      relative: "Ğolib",
+    }, "lat", "lat"));
+    assert.equal(newToOld.name, "O‘zbekiston G‘alaba", "new letters convert back to legacy Latin");
+    assert.equal(newToOld.position, "Shahar va chiroq", "new digraph letters convert back to legacy Latin");
+
     assert.deepEqual(pageErrors, [], "page has no uncaught JavaScript errors");
-    console.log("Browser smoke test passed: both Excel sources loaded and authoritative fields merged.");
+    console.log("Browser smoke test passed: dual Excel import and Uzbek alphabet conversion round-trips work.");
   } finally {
     if (browser) await browser.close();
     await new Promise((resolve, reject) =>
