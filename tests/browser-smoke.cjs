@@ -302,7 +302,7 @@ async function main() {
     }, "cyr", "new"));
     assert.equal(cyrToNew.name, "Özbekiston Ğalaba", "Cyrillic O‘ and G‘ become Ö and Ğ");
     assert.equal(cyrToNew.position, "Şahar va çiroq", "Cyrillic Sh and Ch become Ş and Ç");
-    assert.equal(cyrToNew.specialty, "Öqituvchi", "new letters apply to the fields object");
+    assert.equal(cyrToNew.specialty, "Öqituvçi", "new letters apply to the fields object");
     assert.equal(cyrToNew.work, "2020–2022: Çiroq şähri".replace("ä", "a"), "new letters apply to work history");
     assert.equal(cyrToNew.relative, "Ğolib", "new letters apply to relatives");
     assert.equal(cyrToNew.relativeWork, "Özbekistonda", "relative work fields are converted too");
