@@ -613,7 +613,7 @@ test("isTechDept: Texnik foydalanish va xo'jalik bo'limi xodimlarining mutaxassi
   );
 });
 
-test("fixDateTypos: 2917 kabi klaviatura xatolarini 2017 ga avtomatik tuzatadi", () => {
+test("fixDateTypos: 2917 kabi klaviatura xatolarini 2017 ga avtomatik tuzatadi, lekin PQ-2909 yoki 1080-uy kabilarni buzmaydi", () => {
   assert.equal(
     app.SpravkaCore.fixDateTypos("2016-2917 йй. - Референт"),
     "2016-2017 йй. - Референт",
@@ -625,6 +625,14 @@ test("fixDateTypos: 2917 kabi klaviatura xatolarini 2017 ga avtomatik tuzatadi",
   assert.equal(
     app.SpravkaCore.fixDateTypos("2920-йилдан"),
     "2020-йилдан",
+  );
+  assert.equal(
+    app.SpravkaCore.fixDateTypos("ПҚ-2909 qarori bo'yicha, 1080-uy"),
+    "ПҚ-2909 qarori bo'yicha, 1080-uy",
+  );
+  assert.equal(
+    app.SpravkaCore.tidyWork("Термиз шаҳри, 1080-уй, ПҚ-2909"),
+    "Термиз шаҳри, 1080-уй, ПҚ-2909",
   );
 });
 
@@ -662,6 +670,18 @@ test("dateIssues: oliy ta'limda o'qish (magistratura/doktorantura) bilan birgali
   assert.equal(p2.work[0], "2016-2017 йй. - Кафедра мудири");
   assert.equal(issues2.some((s) => s.includes("kelajakdagi yil")), false);
   assert.equal(issues2.some((s) => s.includes("kesib o‘tadi")), false);
+
+  // 3-holat: O'qituvchining haqiqiy xronologik tartib buzilishi baribir aniqlanishi kerak
+  const p3 = {
+    since: "2025-йил",
+    fields: { birth_date: "1985-01-01" },
+    work: [
+      "2020-2025 йй. - Кафедра ўқитувчиси",
+      "2010-2015 йй. - Мактаб ўқитувчиси",
+    ],
+  };
+  const issues3 = app.dateIssues(p3);
+  assert.equal(issues3.some((s) => s.includes("tartib buzilgan")), true);
 });
 
 

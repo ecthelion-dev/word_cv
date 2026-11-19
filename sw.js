@@ -1,10 +1,10 @@
-const CACHE = "malumotnoma-offline-v1";
+const CACHE = "malumotnoma-offline-v2";
 const PRECACHE = [
   "./",
   "./index.html",
   "./manifest.json",
   "./css/fonts.css?v=a7797cf389",
-  "./css/app.css?v=sci-rank-1",
+  "./css/app.css?v=lead-edu-23",
   "./vendor/jszip.min.js",
   "./vendor/xmldom.js",
   "./vendor/pdf.min.js",

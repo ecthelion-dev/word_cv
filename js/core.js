@@ -181,12 +181,11 @@
   function fixDateTypos(t) {
     if (!t) return t;
     return String(t)
-      .replace(/\b29(\d{2})\b/g, "20$1")
-      .replace(/\b28(\d{2})\b/g, "20$1")
-      .replace(/\b10([789]\d)\b/g, "19$1");
+      .replace(/(?<![№#/\dA-Za-zА-Яа-яЁёЎўҚқҒғҲҳ])(?<![A-Za-zА-Яа-яЁёЎўҚқҒғҲҳ]-)(?:29|28)([0-2]\d|30)(?!\d)/g, "20$1")
+      .replace(/(?<![№#/\dA-Za-zА-Яа-яЁёЎўҚқҒғҲҳ-])10([789]\d)(?=\s*(?:[-–—]\s*(?:\d{4}|й|y|ҳ|h)|й|y|$))/gi, "19$1");
   }
   function h(t) {
-    return fixDateTypos(String(t || ""))
+    return String(t || "")
       .replace(/[\t\n\r\v\u00a0]+/g, " ")
       .replace(/([а-яёўқғҳ]{3,})(?=[А-ЯЁЎҚҒҲ][а-яёўқғҳ])/g, "$1 ")
       .replace(/([a-z‘’]{3,})(?=[A-Z][a-z])/g, "$1 ")
@@ -198,7 +197,7 @@
   }
   function f(t) {
     let e = (t || []).map((t) => h(t)).filter((t) => t);
-    const n = (t) => /^(?:\d{1,2}\.)?(?:19[3-9]\d|20\d\d)(?!\d)/.test(t),
+    const n = (t) => /^(?:\d{1,2}\.)?(?:19[3-9]\d|2[089]\d\d)(?!\d)/.test(t),
       s = e.filter(n).length;
     if (e.length && (s >= 0.5 * e.length || (n(e[0]) && s >= 2))) {
       const t = [];
@@ -2511,7 +2510,7 @@
           o.since = sFixed;
         }
       }
-      for (const t of Object.keys(o.fields)) {
+      for (const t of ["grad_year", "birth_date"]) {
         if (o.fields[t]) {
           const fFixed = fixDateTypos(o.fields[t]);
           if (fFixed !== o.fields[t]) {

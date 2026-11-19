@@ -1034,12 +1034,11 @@ function fixDateTypos(t) {
     return SpravkaCore.fixDateTypos(t);
   }
   return String(t)
-    .replace(/\b29(\d{2})\b/g, "20$1")
-    .replace(/\b28(\d{2})\b/g, "20$1")
-    .replace(/\b10([789]\d)\b/g, "19$1");
+    .replace(/(?<![№#/\dA-Za-zА-Яа-яЁёЎўҚқҒғҲҳ])(?<![A-Za-zА-Яа-яЁёЎўҚқҒғҲҳ]-)(?:29|28)([0-2]\d|30)(?!\d)/g, "20$1")
+    .replace(/(?<![№#/\dA-Za-zА-Яа-яЁёЎўҚқҒғҲҳ-])10([789]\d)(?=\s*(?:[-–—]\s*(?:\d{4}|й|y|ҳ|h)|й|y|$))/gi, "19$1");
 }
 const STUDY_RE =
-  /талаба|магистр|магистратура|докторант|докторантура|аспирант|аспирантура|изланувчи|тадқиқотчи|стажёр|стажер|ўқувчи|тингловчи|ўриндош|ўриндошлик|ординатор|ординатура|резидент|резидентура|интерн|интернатура|соатбай|ставка|илмий|кабинет|лаборант|ўқитувчи|муаллим|кафедра|talaba|magistr|magistratura|doktorant|doktorantura|aspirant|aspirantura|izlanuvchi|tadqiqotchi|stajyor|stajer|o['‘’`ʻ]quvchi|tinglovchi|o['‘’`ʻ]rindosh|o['‘’`ʻ]rindoshlik|soatbay|stavka|ilmiy|kabinet|laborant|o['‘’`ʻ]qituvchi|muallim|kafedra|студент|совмест|ҳарбий хизмат|harbiy xizmat|срочн/i;
+  /талаба|магистр|магистратура|докторант|докторантура|аспирант|аспирантура|изланувчи|тадқиқотчи|стажёр|стажер|ўқувчи|тингловчи|ўриндош|ўриндошлик|ординатор|ординатура|резидент|резидентура|интерн|интернатура|соатбай|ставка|talaba|magistr|magistratura|doktorant|doktorantura|aspirant|aspirantura|izlanuvchi|tadqiqotchi|stajyor|stajer|o['‘’`ʻ]quvchi|tinglovchi|o['‘’`ʻ]rindosh|o['‘’`ʻ]rindoshlik|soatbay|stavka|студент|совмест|ҳарбий хизмат|harbiy xizmat|срочн/i;
 function dateIssues(e) {
   const t = [],
     a = new Date().getFullYear(),
@@ -2967,7 +2966,11 @@ function renderFixed(e) {
   const t = el("div", "page"),
     a = e.S.labels,
     n = realFixes(e).map((e) => e[1]),
-    isTech = isTechDept(e._it || (typeof sel !== "undefined" && sel), e),
+    isTech = isTechDept(
+      (typeof items !== "undefined" && items.find((x) => x.P === e)) ||
+        (typeof sel !== "undefined" && sel),
+      e,
+    ),
     i = (e, t, a, i) => {
       const o = el(t);
       if (a && !/^\?+$/.test(String(a).trim())) markWords(o, a, n, "fx");

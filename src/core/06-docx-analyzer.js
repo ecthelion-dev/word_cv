@@ -287,7 +287,7 @@
           o.since = sFixed;
         }
       }
-      for (const t of Object.keys(o.fields)) {
+      for (const t of ["grad_year", "birth_date"]) {
         if (o.fields[t]) {
           const fFixed = fixDateTypos(o.fields[t]);
           if (fFixed !== o.fields[t]) {
