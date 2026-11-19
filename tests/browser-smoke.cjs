@@ -306,6 +306,10 @@ async function main() {
     assert.equal(cyrToNew.work, "2020-2022 yy. - Çiroq şahri", "new letters apply to normalized work history");
     assert.equal(cyrToNew.relative, "Ğolib", "new letters apply to relatives");
     assert.equal(cyrToNew.relativeWork, "Özbekistonda", "relative work fields are converted too");
+    assert.equal(cyrToNew.birthPlaceLabel, "Tuğilgan joyi", "static birth-place label converts to new Uzbek Latin");
+    assert.equal(cyrToNew.birthYearLabel, "Tuğilgan yili", "static birth-year label converts to new Uzbek Latin");
+    assert.equal(cyrToNew.relationHeader, "Tuğilgan yili va joyi", "relative table heading converts to new Uzbek Latin");
+    assert.equal(cyrToNew.relationExample, "Turmush örtöği", "static relation names convert to new Uzbek Latin");
 
     const oldLatinToNew = await page.evaluate(() => window.__convertScriptOutputForTest({
       name: "O‘zbekiston G‘alaba",
