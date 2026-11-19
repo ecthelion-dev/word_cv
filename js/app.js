@@ -190,6 +190,7 @@ const items = [],
 let running = !1;
 const scriptNow = () =>
     document.querySelector('input[name="script"]:checked').value,
+  scriptIsLatin = () => ["lat", "new"].includes(scriptNow()),
   $ = (e) => document.getElementById(e);
 if ("undefined" != typeof JSZip && !JSZip.prototype._tzFix) {
   const e = JSZip.prototype.generateAsync;
@@ -1272,23 +1273,69 @@ async function pdfPhoto(e) {
     return "png" === t ? { bytes: e.bytes, type: "png" } : null;
   }
 }
-function outP(e) {
-  const t = scriptNow(),
-    a = "lat" === t || ("cyr" !== t && null);
-  if (null === a || a === !!e.S.latin) return e;
-  const n = {
-    ...e,
-    fields: { ...e.fields },
-    work: [...e.work],
-    relatives: e.relatives.map((e) => ({ ...e })),
+function mapOutputText(data, convert) {
+  const next = {
+    ...data,
+    fields: { ...(data.fields || {}) },
+    work: [...(data.work || [])],
+    relatives: (data.relatives || []).map((item) => ({ ...item })),
   };
-  return (
-    SpravkaCore.convertScript(n, a),
-    (n.work = n.work.map((e) => SpravkaCore.fixWorkLine(e, n.S.latin))),
-    n
-  );
+  const cv = (value) => (typeof value === "string" ? convert(value) : value);
+  for (const key of ["name", "since", "position", "relHeadingName"]) {
+    next[key] = cv(next[key]);
+  }
+  for (const key of Object.keys(next.fields)) next.fields[key] = cv(next.fields[key]);
+  next.work = next.work.map(cv);
+  for (const relative of next.relatives) {
+    for (const key of ["name", "birth", "work", "address"]) relative[key] = cv(relative[key]);
+  }
+  return next;
 }
-const SCRIPT_LBL = { auto: "asl holida", cyr: "kirill", lat: "lotin" };
+function toNewUzbekLatin(value) {
+  return String(value == null ? "" : value)
+    .replace(/[oO][’‘ʻʼ']/g, (match) => (match[0] === "O" ? "Ö" : "ö"))
+    .replace(/[gG][’‘ʻʼ']/g, (match) => (match[0] === "G" ? "Ğ" : "ğ"))
+    .replace(/sh/gi, (match) => (match[0] === match[0].toUpperCase() ? "Ş" : "ş"))
+    .replace(/ch/gi, (match) => (match[0] === match[0].toUpperCase() ? "Ç" : "ç"));
+}
+function toLegacyUzbekLatin(value) {
+  return String(value == null ? "" : value)
+    .replace(/ö/g, "o‘")
+    .replace(/Ö/g, "O‘")
+    .replace(/ğ/g, "g‘")
+    .replace(/Ğ/g, "G‘")
+    .replace(/ş/g, "sh")
+    .replace(/Ş/g, "Sh")
+    .replace(/ç/g, "ch")
+    .replace(/Ç/g, "Ch");
+}
+function outP(e) {
+  const target = scriptNow();
+  if ("auto" === target) return e;
+
+  const sourceIsLatin = !!(e.S && e.S.latin);
+  if ("cyr" === target) {
+    if (!sourceIsLatin) return e;
+    const next = mapOutputText(e, toLegacyUzbekLatin);
+    SpravkaCore.convertScript(next, false);
+    next.work = next.work.map((line) => SpravkaCore.fixWorkLine(line, next.S.latin));
+    return next;
+  }
+
+  let next = sourceIsLatin
+    ? mapOutputText(e, (value) => value)
+    : mapOutputText(e, (value) => value);
+  if (!sourceIsLatin) SpravkaCore.convertScript(next, true);
+  next = mapOutputText(next, "new" === target ? toNewUzbekLatin : toLegacyUzbekLatin);
+  next.work = next.work.map((line) => SpravkaCore.fixWorkLine(line, next.S.latin));
+  return next;
+}
+const SCRIPT_LBL = {
+  auto: "asl holida",
+  cyr: "kirill",
+  lat: "eski lotin",
+  new: "yangi o‘zbek lotini",
+};
 async function buildOut(e, t, a) {
   const n = outP(e);
   return "pdf" === t
@@ -1345,7 +1392,8 @@ function pickFormat(e, t) {
   for (const [value, label] of [
     ["auto", "Asl holida"],
     ["cyr", "Кирилл"],
-    ["lat", "Lotin"],
+    ["lat", "Eski lotin"],
+    ["new", "Yangi o‘zbek lotini (Ö, Ğ, Ş, Ç)"],
   ]) {
     const option = document.createElement("option");
     option.value = value;
@@ -1397,6 +1445,34 @@ if (
 ) {
   window.__openFormatMenuForTest = (anchor) => pickFormat(anchor, "one");
   window.__formatScriptNowForTest = () => scriptNow();
+  window.__convertScriptOutputForTest = (data, sourceScript, targetScript) => {
+    const radio = document.querySelector(`input[name="script"][value="${targetScript}"]`);
+    if (!radio) throw new Error("Unknown script target: " + targetScript);
+    radio.checked = true;
+    const output = SpravkaCore.blankData("cyr" !== sourceScript);
+    output.name = data.name;
+    output.since = data.since || "";
+    output.position = data.position;
+    output.fields = { ...output.fields, specialty: data.specialty };
+    output.work = [data.work];
+    output.relatives = [{
+      rel: "Отаси",
+      name: data.relative,
+      birth: "",
+      work: data.relativeWork || "",
+      address: "",
+    }];
+    const result = outP(output);
+    return {
+      name: result.name,
+      position: result.position,
+      specialty: result.fields.specialty,
+      work: result.work[0],
+      relative: result.relatives[0].name,
+      relativeWork: result.relatives[0].work,
+      scriptLatin: !!result.S.latin,
+    };
+  };
 }
 async function downloadOne(e, t, a) {
   if (!e || !e.P) return;
@@ -3555,7 +3631,6 @@ function zipAll() {
       }
     }
   }));
-
 // ============================================================================
 // MODULE: src/app/02-excel.js
 // ============================================================================
@@ -5574,7 +5649,7 @@ function drawNew() {
         : (xl.unmatched || []).filter((e) => !isHeadRow(xl.rows[e]));
       if (!e.length)
         return void n.append(el("p", "msg", "Hech kim topilmadi."));
-      const t = "lat" === scriptNow();
+      const t = scriptIsLatin();
       for (const a of e.slice(0, 20)) {
         const e = xl.rows[a],
           o = el("div"),
@@ -5817,7 +5892,6 @@ function markEmpty(e) {
     n && n.after(t);
   }
 }
-
 // ============================================================================
 // MODULE: src/app/03-coi.js
 // ============================================================================
@@ -12836,7 +12910,7 @@ function newStaffSec(e) {
         return n.includes(e) || n.includes(t);
       });
     i.textContent = String(xl.unmatched.length);
-    const n = "lat" === scriptNow();
+    const n = scriptIsLatin();
     for (const e of a.slice(0, d)) {
       const t = xl.rows[e],
         a = el("li", "newrow");
@@ -14550,7 +14624,7 @@ function renderCheck(e) {
           const t = el("button", "btn2", "Excel'dan yaratish");
           ((t.type = "button"),
             (t.onclick = () => {
-              (createFromExcel(e.i, "lat" === scriptNow()),
+              (createFromExcel(e.i, scriptIsLatin()),
                 toast(`${e.nm} — Excel'dan ma'lumotnoma yaratildi ✓`),
                 renderCheck());
             }),
@@ -14701,7 +14775,6 @@ function renderCheck(e) {
     )) && toast("Yo'qlama ro'yxati yuklandi ✓");
   }),
   updateStats());
-
 // ============================================================================
 // MODULE: src/app/10-dual-excel.js
 // ============================================================================
